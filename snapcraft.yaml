@@ -14,13 +14,23 @@ confinement: devmode # use 'strict' once you have the right plugs and slots
 architectures:
   - build-on: [arm64, armhf, amd64]
 
+plugs:
+  system-files:
+    read:
+      - /etc/resolv.conf
+    write:
+      - /etc/resolv.conf
+
 apps: 
   xerxes-node:
-    command: bin/python3 main.py
+    command: bin/xerxes-node
+    # allow access to SPI, I2C, I/O...
+    plugs: [home, spi, i2c, io-ports-control, gpio, gpio-control, system-files]
+
 
 parts:
   xerxes-node:
     # See 'snapcraft plugins'
     plugin: python
-    source: ../
-    # requirements: ../requirements.txt
+    source: .
+    requirements: ["requirements.txt"]

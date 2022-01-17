@@ -1,0 +1,2 @@
+include xerxes-node README.md
+recursive-include src/static *

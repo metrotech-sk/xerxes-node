@@ -3,6 +3,10 @@
 *.snap.*delta*
 prime
 
+#distutills pičoviny
+MANIFEST
+dist
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
