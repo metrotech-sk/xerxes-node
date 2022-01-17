@@ -12,9 +12,13 @@ description: |
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: devmode # use 'strict' once you have the right plugs and slots
 
+apps: 
+  node:
+    # command: bin/node
+
 parts:
   node:
     # See 'snapcraft plugins'
     plugin: python
     source: ../
-    requirements: ../requirements.txt
+    # requirements: ../requirements.txt
