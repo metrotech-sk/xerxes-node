@@ -11,13 +11,15 @@ description: |
 
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: devmode # use 'strict' once you have the right plugs and slots
+architectures:
+  - build-on: [arm64, armhf, amd64]
 
 apps: 
-  node:
-    # command: bin/node
+  xerxes-node:
+    command: bin/python3 main.py
 
 parts:
-  node:
+  xerxes-node:
     # See 'snapcraft plugins'
     plugin: python
     source: ../
