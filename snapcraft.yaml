@@ -1,6 +1,6 @@
 name: xerxes-node # you probably want to 'snapcraft register <name>'
 base: core20 # the base snap is the execution environment for this snap
-version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
+version: '0.2' # just for humans, typically '1.2+git' or '1.3.2'
 summary: sensor node package # 79 char long summary
 description: |
   TODO: REWRITE! this bullshit
@@ -14,18 +14,18 @@ confinement: devmode # use 'strict' once you have the right plugs and slots
 architectures:
   - build-on: [arm64, armhf, amd64]
 
-plugs:
-  system-files:
-    read:
-      - /etc/resolv.conf
-    write:
-      - /etc/resolv.conf
+#plugs:
+#  system-files:
+#    read:
+#      - /etc/resolv.conf
+#    write:
+#      - /etc/resolv.conf
 
 apps: 
   xerxes-node:
     command: bin/xerxes-node
     # allow access to SPI, I2C, I/O...
-    plugs: [home, spi, i2c, io-ports-control, gpio, gpio-control, system-files]
+    plugs: [home, spi, i2c, io-ports-control, gpio] #, gpio-control, system-files]
 
 
 parts:
