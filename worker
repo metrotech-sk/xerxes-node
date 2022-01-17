@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from src.db import DB
+from pprint import pprint as print
+import os
+import time
+import random
+import socket
+
+HOSTNAME = socket.gethostname()
+
+def run(db):
+    col_test = db.client.alfa.test1
+    # inserted_id = col_test.insert_one(post).inserted_id
+    
+    while True:
+        if os.access("/sys/class/thermal/thermal_zone0/temp", os.R_OK):
+            with open ("/sys/class/thermal/thermal_zone0/temp", "r") as tf:
+                cpu_temp = int(tf.read())
+        else:
+            cpu_temp = -1
+
+        col_test.insert_one({
+            "type": "status",
+            "cpu_temp": cpu_temp,
+            "hostname": HOSTNAME,
+            "timestamp": time.time()
+        })
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    db = DB()
+    print(db.client.alfa.list_collection_names())
+    print(os.getcwd())
+    run(db)
