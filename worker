@@ -1,19 +1,67 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from src.db import DB
+from src.spi import ABP
 from pprint import pprint as print
 import os
 import time
-import random
 import socket
+import logging
+import yaml
+from pymongo import MongoClient
+from  statistics import stdev
 
 HOSTNAME = socket.gethostname()
 
-def run(db):
-    col_test = db.client.alfa.test1
+def home_dir(path):
+    return os.path.join(os.path.expanduser("~"), path)
+
+
+# load settings
+try:
+    settings = yaml.load(
+        open(home_dir("snap/xerxes-node/settings.yaml"), "r"), 
+        Loader=yaml.Loader
+    )
+
+except FileNotFoundError:
+    settings = yaml.load(
+        open("./default_settings.yaml", "r"), 
+        Loader=yaml.Loader
+    )
+
+
+# cycle logs and configure logger
+try: 
+    os.remove("~/snap/xerxes-node/logs/previous.log")
+except FileNotFoundError:
+    pass
+
+try:
+    os.rename(
+        home_dir('snap/xerxes-node/logs/latest.log'),
+        home_dir('snap/xerxes-node/logs/previous.log')
+    )
+except FileNotFoundError:
+    pass
+
+logging.basicConfig(
+    format='%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
+    datefmt='%m/%d/%Y %I:%M:%S %p',
+    filename=home_dir('snap/xerxes-node/logs/latest.log'), 
+    level=logging._nameToLevel[settings['logging_level']]
+)
+
+
+def run(db, sample_period=1, log_period=60):
+    col_test = db.alfa.pressure_test_1
     # inserted_id = col_test.insert_one(post).inserted_id
-    
+
+    sensor = ABP(0, 0, 22, p_min=0, p_max=611.83)
+    current_period = log_period
+    last_cycle = time.time()
+    pressures = []
+
     while True:
         if os.access("/sys/class/thermal/thermal_zone0/temp", os.R_OK):
             with open ("/sys/class/thermal/thermal_zone0/temp", "r") as tf:
@@ -21,17 +69,42 @@ def run(db):
         else:
             cpu_temp = -1
 
-        col_test.insert_one({
-            "type": "status",
-            "cpu_temp": cpu_temp,
-            "hostname": HOSTNAME,
-            "timestamp": time.time()
-        })
-        time.sleep(1)
+        for i in range(10):
+            pressures.append(sensor.get_pressure())
+            sensor.wait_for_next()
+        sensor_temp = sensor.get_temp()
+
+        cycletime=time.time() - last_cycle
+        time.sleep(sample_period-cycletime)
+        last_cycle = time.time()
+        current_period += sample_period
+        
+        if current_period >= log_period:
+            current_period = 0
+            new_id = col_test.insert_one({
+                "type": "measurement",
+                "cpu_temp": cpu_temp/1000.0,
+                "sensor_temp": sensor_temp,
+                "pressure_min": min(pressures),
+                "pressure_max": max(pressures),
+                "pressure_avg": sum(pressures)/len(pressures),
+                "pressure_stdev": stdev(pressures),
+                "unit": "mm",
+                "hostname": HOSTNAME,
+                "timestamp": time.time(),
+                "gm_time": time.asctime(time.gmtime())
+            })
+            log.info(new_id)
+            pressures = []
 
 
 if __name__ == "__main__":
-    db = DB()
-    print(db.client.alfa.list_collection_names())
-    print(os.getcwd())
-    run(db)
+    log = logging.getLogger("main")
+    log.info("Logger started")
+
+    database = MongoClient(settings.get("mongo_URI"))
+    log.info("Database connected")
+
+    log.info(database.alfa.list_collection_names())
+    log.info(os.getcwd())
+    run(database)
