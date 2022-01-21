@@ -4,6 +4,19 @@
 import os
 from pprint import pprint as print 
 import socket
+from wiringpi import wiringPiSetupGpio, pinMode, digitalWrite
+import spidev
+from typing import Tuple
+import time
+from xerxes.spi import ABP
+import xerxes.settings as settings
+from pprint import pprint as print
+import os
+import time
+import socket
+import logging
+from pymongo import MongoClient
+from statistics import stdev
 
 print(f"Hostname: {socket.gethostname()}")
 print(f"SPI devices: {os.popen('ls /dev|grep spi').read()}")

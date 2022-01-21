@@ -1,56 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from src.spi import ABP
+from xerxes.spi import ABP
+import xerxes.settings as settings
 from pprint import pprint as print
 import os
 import time
 import socket
 import logging
-import yaml
 from pymongo import MongoClient
-from  statistics import stdev
+from statistics import stdev
 
 HOSTNAME = socket.gethostname()
 
 def home_dir(path):
     return os.path.join(os.path.expanduser("~"), path)
-
-
-# load settings
-try:
-    settings = yaml.load(
-        open(home_dir("snap/xerxes-node/settings.yaml"), "r"), 
-        Loader=yaml.Loader
-    )
-
-except FileNotFoundError:
-    settings = yaml.load(
-        open("./default_settings.yaml", "r"), 
-        Loader=yaml.Loader
-    )
-
-
-# cycle logs and configure logger
-try: 
-    os.remove("~/snap/xerxes-node/logs/previous.log")
-except FileNotFoundError:
-    pass
-
-try:
-    os.rename(
-        home_dir('snap/xerxes-node/logs/latest.log'),
-        home_dir('snap/xerxes-node/logs/previous.log')
-    )
-except FileNotFoundError:
-    pass
-
-logging.basicConfig(
-    format='%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
-    datefmt='%m/%d/%Y %I:%M:%S %p',
-    filename=home_dir('snap/xerxes-node/logs/latest.log'), 
-    level=logging._nameToLevel[settings['logging_level']]
-)
 
 
 def run(db, sample_period=1, log_period=60):
@@ -99,12 +63,13 @@ def run(db, sample_period=1, log_period=60):
 
 
 if __name__ == "__main__":
+    
     log = logging.getLogger("main")
     log.info("Logger started")
 
-    database = MongoClient(settings.get("mongo_URI"))
+    database = MongoClient(settings.mongo_URI)
     log.info("Database connected")
 
     log.info(database.alfa.list_collection_names())
     log.info(os.getcwd())
-    run(database)
+    run(database, sample_period=settings.sample_period, log_period=settings.update_period)

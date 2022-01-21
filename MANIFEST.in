@@ -1,2 +1,2 @@
-include xerxes-node README.md
-recursive-include src/static *
+include worker probe README.md default_settings.yaml
+recursive-include xerxes *

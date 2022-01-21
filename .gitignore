@@ -2,6 +2,7 @@
 *.snap
 *.snap.*delta*
 prime
+.history
 
 #distutills pičoviny
 MANIFEST
