@@ -1,59 +1,23 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include <vector>
-#include <math.h>
 
 #include <wiringPi.h>
 #include <wiringSerial.h>
+#include "xerxeslib.hpp"
 
 using namespace std;
 
 static auto pinval = HIGH;
 
 void flip(int delayMicro){
-    pinval = ~pinval;
+    if(pinval == HIGH){
+        pinval = LOW;
+    }else{
+        pinval = HIGH;
+    }
     digitalWrite (0, pinval) ;
     delayMicroseconds(delayMicro);
-}
-
-
-template <class T, class U>
-T v_sum(vector<U> &t_vec){
-    T sum = 0;
-    for(auto el: t_vec){
-        sum += el;
-    }
-    return sum;
-}
-
-
-template <class T, class U>
-T v_average(vector<U> &t_vec){
-    return static_cast<T>(v_sum<T>(t_vec))/t_vec.size();
-}
-
-
-template <class T, class U>
-T v_std_dev(vector<U> &t_vec, T t_average){
-    vector<T> v_err2;
-    T err2;
-    for(auto el: t_vec){
-        v_err2.push_back(pow((el - t_average), 2));
-    }
-    return sqrt(v_sum<T>(v_err2))/t_vec.size();
-}
-
-
-template <class T, class U>
-T v_max_err(vector<U> &t_vec, T t_average){
-    long double ldmax = -__LDBL_MAX__;
-    for(auto el: t_vec){
-        if(abs(el - t_average) > ldmax){
-            ldmax = abs(el - t_average);
-        }
-    }
-    return ldmax;
 }
 
 
@@ -101,10 +65,10 @@ int main(int argc, char** argv){
         }
         cout << endl;*/
 
-        auto average = v_average<double>(timings);
-        auto std_dev = v_std_dev<double>(timings, average);
-        auto desired_dev = v_std_dev<double>(timings, static_cast<double>(t)*1000);
-        auto max_dev = v_max_err<double>(timings, static_cast<double>(t)*1000);
+        auto average = VectorOp::v_average<double>(timings);
+        auto std_dev = VectorOp::v_std_dev<double>(timings, average);
+        auto desired_dev = VectorOp::v_std_dev<double>(timings, static_cast<double>(t)*1000);
+        auto max_dev = VectorOp::v_max_err<double>(timings, static_cast<double>(t)*1000);
 
         cout << "Desired t[us]: " << t;
         cout <<", average t[us]:" << average/1000;
@@ -114,7 +78,8 @@ int main(int argc, char** argv){
 
         t2 = high_resolution_clock::now();
         time_span = duration_cast<milliseconds>(t2 - t0);
-        std::this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000-time_span.count()*1000)));
+        auto sleepfor = static_cast<int>(1000-time_span.count()/1000000);
+        std::this_thread::sleep_for(milliseconds(sleepfor));
         
     }
     return 0;

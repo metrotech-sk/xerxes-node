@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_CXX_STANDARD 23)
 
 # set the project name
 project(xerxes-master)
@@ -6,5 +7,10 @@ project(xerxes-master)
 # add the executable
 add_executable(test test.cpp)
 
+
+add_library(xerxes SHARED "xerxeslib.cpp")
+target_link_libraries(xerxes ${WIRINGPI_LIBRARIES} )
+
 find_library(WIRINGPI_LIBRARIES NAMES wiringPi)
-target_link_libraries(test ${WIRINGPI_LIBRARIES})
+target_link_libraries(test ${WIRINGPI_LIBRARIES} xerxes)
+
