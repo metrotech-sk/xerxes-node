@@ -4,11 +4,18 @@
 #include <vector>
 #include <math.h>
 #include <iostream>
+
+#include <wiringPi.h>
+#include <wiringSerial.h>
+
 //used for uart:
 #include <unistd.h>			//Used for UART
 #include <fcntl.h>			//Used for UART
 #include <termios.h>		//Used for UART
 
+
+#define SOH 0x01
+#define SOT 0x02
 
 class VectorOp
 {
@@ -27,23 +34,35 @@ class VectorOp
 
 };
 
-namespace Serial{
+namespace Xerxes{
+
+class Protocol
+{  
+  public:
+    static std::vector<uint8_t> craftMessage(const uint8_t &t_src, const uint8_t &t_dst, const uint32_t &messageId, const std::vector<uint8_t> &payload);
+    static std::vector<uint8_t> craftMessage(const uint8_t &t_src, const uint8_t &t_dst, const uint32_t &messageId);
+    static void addChecksum(std::vector<uint8_t> &buffer);
+    static void addWord(const uint32_t &t_word, std::vector<uint8_t> &buffer);
+
+};
 
 class RS485
 {
   public:
-    RS485(char *t_device, int t_baud, int tx_en);
+    RS485(std::string &t_device, int &t_baud, int &tx_en);
     ~RS485();
 
-    void setDevice(char *t_device);
-    void setBaud(int t_baud);
     int openPort();
     void closePort();
     void writeChar(uint8_t t_send);
+    //void sendMessage(std::vector<uint8_t> &message);
     u_char readChar();
+    void activateTx();
+    void deactivateTx();
 
   private:
     int uart0_filestream;
+    int txpin;
 };
 
 }

@@ -2,86 +2,68 @@
 #include <chrono>
 #include <thread>
 
-#include <wiringPi.h>
-#include <wiringSerial.h>
 #include "xerxeslib.hpp"
+#include <wiringSerial.h>
+#include <wiringPi.h>
 
 using namespace std;
 
-static auto pinval = HIGH;
 
-void flip(int delayMicro){
-    if(pinval == HIGH){
-        pinval = LOW;
-    }else{
-        pinval = HIGH;
-    }
-    digitalWrite (0, pinval) ;
-    delayMicroseconds(delayMicro);
-}
-
-
-void send_uart(){
-    int fd = serialOpen("/dev/ttyAMA0", 115200);
+int sendMsg(vector<uint8_t> msg){
+    int baudrate = 115200;
+    int fd = serialOpen("/dev/ttyS0", baudrate);
     if (fd < 0)
     {
-        fprintf(stderr, "Unable to open ttyAMA0");
+        fprintf(stderr, "Unable to open UART");
+        return -1;
     }
 
-    serialPrintf(fd,"Hello World!!!\n");    
-    cout << "fd is " << fd << endl;
+    digitalWrite (1, HIGH) ;
+    delayMicroseconds(1);
+    for(auto el: msg){
+        serialPutchar (fd, 0x01) ;
+    }
+    delayMicroseconds(msg.size()*10000000/baudrate);
+    digitalWrite (1, LOW) ;
     serialClose(fd);
+    return 0;
 }
 
 int main(int argc, char** argv){
     wiringPiSetup () ;
+    pinMode (1, OUTPUT) ;
 
     using namespace std::chrono;
 
-    pinMode (0, OUTPUT) ;
+    uint32_t msgid(0);
+    vector<uint8_t> devices{0x01, 0x02, 0x03};
 
-    auto t = atoi(argv[1]);
-    auto reps = atoi(argv[2]);
-
-    vector<uint32_t> timings;
-    // duration<double> time_span;
-    nanoseconds time_span;
-
-    high_resolution_clock::time_point t0, t1, t2;
-    for(;;){
-        t0 = high_resolution_clock::now();
-
-        for(auto rep=0; rep<reps; rep++){
-            t1 = high_resolution_clock::now();
-            flip(t);
-            t2 = high_resolution_clock::now();
-            time_span = duration_cast<nanoseconds>(t2 - t1);
-            timings.push_back(time_span.count());
-        }
-
-        /*
-        for(auto el: timings){
-            cout << (double)el/1000.0 << ", ";
-        }
-        cout << endl;*/
-
-        auto average = VectorOp::v_average<double>(timings);
-        auto std_dev = VectorOp::v_std_dev<double>(timings, average);
-        auto desired_dev = VectorOp::v_std_dev<double>(timings, static_cast<double>(t)*1000);
-        auto max_dev = VectorOp::v_max_err<double>(timings, static_cast<double>(t)*1000);
-
-        cout << "Desired t[us]: " << t;
-        cout <<", average t[us]:" << average/1000;
-        cout << ", instability[us]: " << std_dev/1000;
-        cout << ", inaccuracy[us]: " << desired_dev/1000;
-        cout << ", max dev[us]: " << max_dev/1000 << endl;
-
-        t2 = high_resolution_clock::now();
-        time_span = duration_cast<milliseconds>(t2 - t0);
-        auto sleepfor = static_cast<int>(1000-time_span.count()/1000000);
-        std::this_thread::sleep_for(milliseconds(sleepfor));
+    for(auto dst_dev:devices)
+    {
+        std::vector<uint8_t> message = Xerxes::Protocol::craftMessage(0x00, dst_dev, msgid++);
         
+        for(auto el:message)
+        {
+            printf("%X, ", el);
+        }
+        cout << endl;
+        sendMsg(message);
     }
+
+
+    return 0;
+
+    // vector<uint32_t> timings;
+    // duration<double> time_span;
+    // nanoseconds time_span;
+
+    // high_resolution_clock::time_point t0, t1, t2;
+    
+    // t0 = high_resolution_clock::now();
+    // time_span = duration_cast<nanoseconds>(t2 - t1);
+    // auto sleepfor = static_cast<int>(1000-time_span.count()/1000000);
+    // std::this_thread::sleep_for(milliseconds(sleepfor));
+    
     return 0;
     
 }
