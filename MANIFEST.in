@@ -1,2 +1,2 @@
-include worker probe README.md default_settings.yaml
+include xerxes-worker probe README.md default_settings.yaml
 recursive-include xerxes *
