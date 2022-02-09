@@ -244,3 +244,4 @@ void Xerxes::Protocol::addChecksum(std::vector<uint8_t> &buffer)
 template double VectorOp::v_average<double, unsigned int>(std::vector<unsigned int, std::allocator<unsigned int> >&);
 template double VectorOp::v_std_dev<double, unsigned int>(std::vector<unsigned int, std::allocator<unsigned int> >&, double);
 template double VectorOp::v_max_err<double, unsigned int>(std::vector<unsigned int, std::allocator<unsigned int> >&, double);
+template uint8_t VectorOp::v_sum<uint8_t, uint8_t>(std::vector<uint8_t> &);

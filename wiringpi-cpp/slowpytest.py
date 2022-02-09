@@ -119,7 +119,7 @@ if __name__ == "__main__":
     reply = {}
     A = Addr(range_low=1, range_high=4, start=1)
     
-    com = serial.Serial(baudrate=115200, port="/dev/ttyS0")
+    com = serial.Serial(baudrate=115200, port="/dev/ttyUSB0")
     try:
         # com = serial.rs485.RS485()
         #com.rs485_mode = serial.rs485.RS485Settings(rts_level_for_tx=False, rts_level_for_rx=True)
