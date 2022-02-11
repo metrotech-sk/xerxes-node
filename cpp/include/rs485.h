@@ -8,8 +8,8 @@
 #include <wiringSerial.h>
 #include <termios.h>
 
-#include "Bus.hpp"
-#include "Stopwatch.hpp"
+#include "bus.h"
+#include "stopwatch.h"
 
 namespace Xerxes{
 

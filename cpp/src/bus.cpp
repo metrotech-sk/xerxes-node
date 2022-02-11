@@ -1,4 +1,4 @@
-#include "Bus.hpp"
+#include "bus.h"
 
 using namespace Xerxes;
 

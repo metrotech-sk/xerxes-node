@@ -1,4 +1,4 @@
-#include "RS485.hpp"
+#include "rs485.h"
 
 using namespace Xerxes;
 using namespace std;
@@ -94,7 +94,7 @@ int RS485::writeMsg(const vector<uint8_t> &t_message)
 {
     if (!opened())
     {
-        fprintf(stderr, "Unable to open UART");
+        cerr << "Unable to open: " << m_devname << endl;
         return -1;
     }
 
@@ -120,7 +120,7 @@ int RS485::writeMsg(const vector<uint8_t> &t_message)
 
 vector<uint8_t> RS485::readMsg(const chrono::duration<double> t_timeout)
 {
-	vector<uint8_t> to_return{0x01};
+	vector<uint8_t> to_return;
     Stopwatch sw = Stopwatch();
     sw.setTimer(t_timeout);
     sw.start();
@@ -135,6 +135,8 @@ vector<uint8_t> RS485::readMsg(const chrono::duration<double> t_timeout)
         }
         header = readChar();
     }while(header != 0x01);
+
+    to_return.push_back(0x01);
 
 	while(!availChar() && !sw.elapsed());
     uint8_t len = readChar();

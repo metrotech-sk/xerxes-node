@@ -8,7 +8,7 @@ include_directories("./include")
 
 find_library(WIRINGPI_LIBRARIES NAMES wiringPi)
 
-add_library(xerxes SHARED "src/VectorOp.cpp" "src/Stopwatch.cpp" "src/Protocol.cpp" "src/RS485.cpp" "src/Bus.cpp") 
+add_library(xerxes SHARED "src/vectorop.cpp" "src/stopwatch.cpp" "src/protocol.cpp" "src/rs485.cpp" "src/bus.cpp" "src/p_leaf.cpp") 
 target_link_libraries(xerxes ${WIRINGPI_LIBRARIES} )
 
 
