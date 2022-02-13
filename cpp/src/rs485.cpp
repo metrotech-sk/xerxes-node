@@ -16,9 +16,7 @@ RS485::RS485(const string &t_device, GpioPin *tx_en)
     my_serial_port.SetBaudRate( BaudRate::BAUD_115200 );
     my_serial_port.SetCharacterSize( CharacterSize::CHAR_SIZE_8 );
     my_serial_port.SetParity( Parity::PARITY_NONE );
-    my_serial_port.SetStopBits( StopBits::STOP_BITS_1 ) ;
-    
-
+    my_serial_port.SetStopBits( StopBits::STOP_BITS_1 );
 }
 
 
@@ -55,14 +53,24 @@ uint8_t RS485::readChar()
 
 int RS485::writeMsg(const vector<uint8_t> &t_message)
 {
-    pinTxEn_->SetHigh();
+    auto t0 = chrono::high_resolution_clock::now();
     
+    pinTxEn_->SetHigh();
+
+
     for(auto el: t_message){
         writeChar(el);
     }
-    my_serial_port.DrainWriteBuffer();
+
+    auto t1 = high_resolution_clock::now();
+
+    duration<double> time_span = duration_cast<duration<double>>(t1 - t0);
+    auto sleepfor = (((double)t_message.size()*10/m_baudrate)-time_span.count())*1000000;
+
+    usleep(sleepfor);
+
     pinTxEn_->SetLow();
-    
+
     return t_message.size();
 }
 

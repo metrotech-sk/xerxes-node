@@ -4,6 +4,7 @@
 #include <string>
 #include <stdint.h>
 #include <unistd.h>
+#include <thread>
 
 #include <termios.h>
 #include <libserial/SerialPort.h>
@@ -17,10 +18,10 @@ namespace Xerxes{
 class RS485: public Bus
 {
   GpioPin *pinTxEn_;
+  std::string m_devname;
+  int m_baudrate{115200};
 
   public:
-    std::string m_devname;
-    int m_baudrate;
 
     RS485(const std::string &t_device, GpioPin *tx_en);
     ~RS485();
