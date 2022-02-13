@@ -12,9 +12,8 @@ namespace Xerxes
 class Bus
 {
   public:
-    virtual bool opened();
-    virtual std::vector<uint8_t> readMsg(const std::chrono::duration<double> t_timeout);
-    virtual int writeMsg(const std::vector<uint8_t> &t_message);
+    virtual std::vector<uint8_t> read(size_t maxSize, const std::chrono::milliseconds& timeout) = 0;
+    virtual size_t write(const std::vector<uint8_t> &t_message) = 0;
 };
 
 } // namespace Xerxes
