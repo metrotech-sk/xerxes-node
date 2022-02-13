@@ -1,27 +1,32 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <vector>
+
 
 #include "rs485.h"
 #include "protocol.h"
 #include "p_leaf.h"
 
+#include "gpio_pin.h"
+
+#include <libserial/SerialPort.h>
+
 using namespace std;
 using namespace chrono;
+using namespace LibSerial;
 
 int main(int argc, char** argv){
     vector<uint8_t> devices{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    int rs_tx_enable_pin = 1;
-    string ttyDev = "/dev/ttyS0";
-    int baud = 115200;
+    uint8_t next_char;
 
-    Xerxes::RS485 *rs485 = new Xerxes::RS485(ttyDev, baud, rs_tx_enable_pin);
-    if(rs485->openDevice()<0)
-    {
-        cerr << "unable to open device: " << ttyDev << endl;
-        return -1;
-    };
+    Xerxes::GpioPin *gpio18 = new Xerxes::GpioPin(18);
+    gpio18->MakeOutput();
+
+    string ttyDev = "/dev/ttyS0";
+
+    Xerxes::RS485 *rs485 = new Xerxes::RS485(ttyDev, gpio18);
 
     // open protocol, my addres 0x00;
     Xerxes::Protocol *xerxes = new Xerxes::Protocol(rs485, 0x00);
@@ -30,8 +35,9 @@ int main(int argc, char** argv){
     auto s1vals = snimac1.read();
     cout << s1vals.p_bar << "t: " << s1vals.t_sens << endl;
 
-
+    
     vector<uint8_t>buf;
+
 /*
     for (;;)
     {

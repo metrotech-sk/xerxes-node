@@ -3,17 +3,17 @@
 
 #include <stdint.h>
 #include <vector>
+#include <numeric>
 #include <chrono>
 
 #include "bus.h"
-#include "vectorop.h"
 
 #define SOH 0x01
 #define SOT 0x02
 
 namespace Xerxes{
 
-class Protocol: public Bus
+class Protocol
 {  
   public:
     Protocol(Bus *t_bus, const uint8_t &t_my_addr);

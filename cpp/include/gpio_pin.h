@@ -19,10 +19,11 @@ namespace Xerxes
 class GpioPin
 {
     std::string direction_;
-    std::string pin_nr_;
+    std::string pin_nr_{};
     int pin_val_fd_;
 
   public:
+    GpioPin();
     GpioPin(const int &pin_nr);
     GpioPin(const std::string &pin_nr);
     ~GpioPin();

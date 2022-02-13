@@ -4,12 +4,18 @@ set(CMAKE_CXX_STANDARD 20)
 # set the project name
 project(xerxes-master)
 
+
+
+find_package(PkgConfig)
+pkg_check_modules(SERIAL libserial)
+
 include_directories("./include")
 
-find_library(WIRINGPI_LIBRARIES NAMES wiringPi)
+find_library(SERIAL_LIBRARIES NAMES libserial)
 
-add_library(xerxes SHARED "src/vectorop.cpp" "src/stopwatch.cpp" "src/protocol.cpp" "src/rs485.cpp" "src/bus.cpp" "src/p_leaf.cpp") 
-target_link_libraries(xerxes ${WIRINGPI_LIBRARIES} )
+add_library(xerxes SHARED "src/vectorop.cpp" "src/stopwatch.cpp" "src/protocol.cpp" "src/rs485.cpp" "src/bus.cpp" "src/p_leaf.cpp" "src/gpio_pin.cpp") 
+# target_link_libraries(xerxes ${WIRINGPI_LIBRARIES} )
+target_link_libraries(xerxes ${SERIAL_LIBRARIES})
 
 
 # add the executable

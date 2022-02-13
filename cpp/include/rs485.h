@@ -4,40 +4,37 @@
 #include <string>
 #include <stdint.h>
 #include <unistd.h>
-#include <wiringPi.h>
-#include <wiringSerial.h>
+
 #include <termios.h>
+#include <libserial/SerialPort.h>
 
 #include "bus.h"
 #include "stopwatch.h"
+#include "gpio_pin.h"
 
 namespace Xerxes{
 
 class RS485: public Bus
 {
+  GpioPin *pinTxEn_;
+
   public:
     std::string m_devname;
     int m_baudrate;
 
-    RS485(const std::string &t_device, const int &t_baud, const int &tx_en);
+    RS485(const std::string &t_device, GpioPin *tx_en);
     ~RS485();
 
-    int openDevice();
-    void closeDevice();
-    bool opened();
-
-    void writeChar(const uint8_t &t_send);
 
     int availChar();
-    u_char readChar();
-
-    void activateTx();
-    void deactivateTx();
+    uint8_t readChar();
+    void writeChar(const uint8_t &t_send);
 
     std::vector<uint8_t> readMsg(const std::chrono::duration<double> t_timeout);
     int writeMsg(const std::vector<uint8_t> &t_message);
-    int m_uart_fd = -1;
-    int m_txpin;
+
+  private:    
+    LibSerial::SerialPort my_serial_port;
 
 };
 

@@ -3,16 +3,21 @@
 using namespace Xerxes;
 using namespace std;
 using namespace chrono;
+using namespace LibSerial;
 
-RS485::RS485(const string &t_device, const int &t_baud, const int &tx_en)
+
+RS485::RS485(const string &t_device, GpioPin *tx_en)
 {
-    //setup GPIO
-    wiringPiSetup () ;
-    pinMode (tx_en, OUTPUT) ;
+    m_devname = t_device;
+    pinTxEn_ = tx_en;
 
-	m_devname = t_device;
-    m_txpin = tx_en;
-    m_baudrate = t_baud;
+    my_serial_port.Open(t_device);
+
+    my_serial_port.SetBaudRate( BaudRate::BAUD_115200 );
+    my_serial_port.SetCharacterSize( CharacterSize::CHAR_SIZE_8 );
+    my_serial_port.SetParity( Parity::PARITY_NONE );
+    my_serial_port.SetStopBits( StopBits::STOP_BITS_1 ) ;
+    
 
 }
 
@@ -22,97 +27,41 @@ RS485::RS485(const string &t_device, const int &t_baud, const int &tx_en)
  * 
  */
 RS485::~RS485(){
-	if(m_uart_fd>0){
-		serialClose(m_uart_fd);
-	}
-}
-
-
-int RS485::openDevice(){
-    // open uart
-    
-    m_uart_fd = serialOpen(m_devname.c_str(), m_baudrate);
-
-    struct termios options ;
-    tcgetattr (m_uart_fd, &options) ;   // Read current options
-    options.c_cc[VTIME] = 0;    // block for 0ms max
-    options.c_cc[VMIN] = 0;
-    tcsetattr (m_uart_fd, TCSANOW, &options) ;   // Set new options
-    return m_uart_fd;
-}
-
-
-void RS485::closeDevice()
-{
-	serialClose(m_uart_fd);
-	m_uart_fd = -1;
-}
-
-
-bool RS485::opened()
-{
-	return (m_uart_fd > 0);
+    if(my_serial_port.IsOpen())
+    {
+        my_serial_port.Close();
+    }
 }
 
 
 void RS485::writeChar(const uint8_t &t_send)
 {
-	if(opened())
-	{
-		serialPutchar(m_uart_fd, t_send);
-	}
-    else{
-        cerr << "Uart not opened"<<endl;
-    }
+    my_serial_port.WriteByte( t_send );
 }
 
 
 int RS485::availChar()
 {
-	return serialDataAvail(m_uart_fd);
+	return my_serial_port.GetNumberOfBytesAvailable();
 }
 
 uint8_t RS485::readChar()
 {
-	return static_cast<uint8_t>(serialGetchar(m_uart_fd));
-}
-
-
-void RS485::activateTx()
-{
-    digitalWrite (m_txpin, HIGH) ;
-}
-
-
-void RS485::deactivateTx()
-{
-    digitalWrite (m_txpin, LOW) ;
+    uint8_t next_char;
+    my_serial_port.ReadByte( next_char, 1 );
+	return next_char;
 }
 
 
 int RS485::writeMsg(const vector<uint8_t> &t_message)
 {
-    if (!opened())
-    {
-        cerr << "Unable to open: " << m_devname << endl;
-        return -1;
-    }
-
-    auto t0 = chrono::high_resolution_clock::now();
-    activateTx();
+    pinTxEn_->SetHigh();
     
-    delayMicroseconds(1);
     for(auto el: t_message){
         writeChar(el);
     }
-
-    auto t1 = high_resolution_clock::now();
-
-    duration<double> time_span = duration_cast<duration<double>>(t1 - t0);
-    auto sleepfor = (((double)t_message.size()*10/m_baudrate)-time_span.count())*1000000;
-    delayMicroseconds(sleepfor);
-    
-    deactivateTx();
+    my_serial_port.DrainWriteBuffer();
+    pinTxEn_->SetLow();
     
     return t_message.size();
 }

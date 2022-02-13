@@ -152,7 +152,9 @@ void Protocol::ping(const uint8_t &t_destination)
 
 std::vector<uint8_t> Protocol::read(const std::chrono::duration<double> &t_timeout){
     auto received = m_bus->readMsg(t_timeout);
-    if(VectorOp::v_sum<uint8_t>(received) == 0)
+    uint8_t chks(0);
+    chks = std::accumulate(received.begin(), received.end(), 0);
+    if(chks == 0)
     {
         return received;
     }
@@ -169,7 +171,9 @@ void Protocol::readToBuf(std::vector<uint8_t> &t_buffer, const std::chrono::dura
     {
         t_buffer.push_back(el);
     }
-    if(VectorOp::v_sum<uint8_t>(received) != 0)
+    uint8_t chks(0);
+    chks = std::accumulate(received.begin(), received.end(), 0);
+    if(chks != 0)
     {
         throw runtime_error("Invalid message (checksum) received!");
     }

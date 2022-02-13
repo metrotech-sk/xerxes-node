@@ -14,6 +14,11 @@ GpioPin::GpioPin(const string &pin_nr)
 }
 
 
+GpioPin::GpioPin(){
+    ;
+}
+
+
 void GpioPin::Setup()
 {
     // Export the desired pin by writing to /sys/class/gpio/export
