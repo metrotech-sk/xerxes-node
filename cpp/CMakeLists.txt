@@ -7,11 +7,6 @@ project(xerxes-master)
 find_package(PkgConfig)
 pkg_check_modules(SERIAL libserial)
 
-add_library(${PROJECT_NAME}_bus INTERFACE)
-
-target_include_directories(${PROJECT_NAME}_bus INTERFACE include)
-
-
 add_library(${PROJECT_NAME}_serial
         src/rs485.cpp)
 
