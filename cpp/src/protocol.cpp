@@ -154,6 +154,9 @@ std::vector<uint8_t> Protocol::read(const std::chrono::duration<double> &t_timeo
     auto received = m_bus->readMsg(t_timeout);
     uint8_t chks(0);
     chks = std::accumulate(received.begin(), received.end(), 0);
+    if(received.size() < 6){
+        throw runtime_error("Invalid message (length) received!");
+    }
     if(chks == 0)
     {
         return received;

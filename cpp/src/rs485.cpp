@@ -17,8 +17,24 @@ RS485::RS485(const string &t_device, GpioPin *tx_en)
     my_serial_port.SetCharacterSize( CharacterSize::CHAR_SIZE_8 );
     my_serial_port.SetParity( Parity::PARITY_NONE );
     my_serial_port.SetStopBits( StopBits::STOP_BITS_1 );
+
+    manual_flow_control_ = true;
 }
 
+
+RS485::RS485(const string &t_device)
+{
+    m_devname = t_device;
+
+    my_serial_port.Open(t_device);
+
+    my_serial_port.SetBaudRate( BaudRate::BAUD_115200 );
+    my_serial_port.SetCharacterSize( CharacterSize::CHAR_SIZE_8 );
+    my_serial_port.SetParity( Parity::PARITY_NONE );
+    my_serial_port.SetStopBits( StopBits::STOP_BITS_1 );
+
+    manual_flow_control_ = false;
+}
 
 /**
  * @brief close fd if opened
@@ -46,30 +62,43 @@ int RS485::availChar()
 uint8_t RS485::readChar()
 {
     uint8_t next_char;
-    my_serial_port.ReadByte( next_char, 1 );
+    try
+    {
+        my_serial_port.ReadByte( next_char, 1 );
+    }
+    catch(LibSerial::ReadTimeout)
+    {
+        next_char = 0x00;
+    }
 	return next_char;
 }
 
 
 int RS485::writeMsg(const vector<uint8_t> &t_message)
 {
-    auto t0 = chrono::high_resolution_clock::now();
+
+    high_resolution_clock::time_point t0, t1;
+    if(manual_flow_control_)
+    {
+        t0 = chrono::high_resolution_clock::now();
+        pinTxEn_->SetHigh();
+    }
     
-    pinTxEn_->SetHigh();
-
-
     for(auto el: t_message){
         writeChar(el);
     }
 
-    auto t1 = high_resolution_clock::now();
+    if(manual_flow_control_)
+    {
+        t1 = high_resolution_clock::now();
 
-    duration<double> time_span = duration_cast<duration<double>>(t1 - t0);
-    auto sleepfor = (((double)t_message.size()*10/m_baudrate)-time_span.count())*1000000;
+        duration<double> time_span = duration_cast<duration<double>>(t1 - t0);
+        auto sleepfor = (((double)t_message.size()*10/m_baudrate)-time_span.count())*1000000;
 
-    usleep(sleepfor);
+        usleep(sleepfor);
 
-    pinTxEn_->SetLow();
+        pinTxEn_->SetLow();
+    }
 
     return t_message.size();
 }
@@ -105,6 +134,10 @@ vector<uint8_t> RS485::readMsg(const chrono::duration<double> t_timeout)
 
         // receive data
         to_return.push_back(readChar());
+    }
+    if(sw.elapsed())
+    {
+        throw runtime_error("Message read timed out");
     }
 
     return to_return;

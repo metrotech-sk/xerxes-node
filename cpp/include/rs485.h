@@ -20,10 +20,12 @@ class RS485: public Bus
   GpioPin *pinTxEn_;
   std::string m_devname;
   int m_baudrate{115200};
+  bool manual_flow_control_;
 
   public:
 
     RS485(const std::string &t_device, GpioPin *tx_en);
+    RS485(const std::string &t_device);
     ~RS485();
 
 

@@ -5,7 +5,10 @@
 #include <vector>
 #include <chrono>
 
-#include <protocol.h>
+#include "protocol.h"
+#include "pressure.h"
+#include "temperature.h"
+
 
 namespace Xerxes
 {
@@ -13,23 +16,31 @@ namespace Xerxes
 class Readings
 {
   public:
-    double p_bar;
-    double t_sens;
-    double t1;
-    double t2;
+    Pressure pressure;
+    Temperature temp_sens;
+    Temperature temp_ext1;
+    Temperature temp_ext2;
 };
-    
+
+
+
+
 class PLeaf{
-  public:
-    PLeaf(const uint8_t &t_addr, Protocol *t_protocol, const std::chrono::duration<double> &t_std_timeout);
-    Readings read();
+  private:
+    Protocol *m_protocol_;
+    Readings last_reading_;  
+    uint32_t last_msg_id_ {0};
+    std::vector<uint32_t> m_ringbuf_ids_;
     uint8_t my_addr;
     std::chrono::duration<double> std_timeout;
-    
-  private:
-    std::vector<uint32_t> m_ringbuf_ids;
-    Protocol *m_protocol;
 
+  public:
+    PLeaf(const uint8_t &t_addr, Protocol *t_protocol, const std::chrono::duration<double> &t_std_timeout);
+    Readings &read();
+
+    const double messagesReceived();
+    const uint8_t &getAddr();
+    const uint32_t &getLastMsgId();
 };
 
 } // namespace Xerxes
