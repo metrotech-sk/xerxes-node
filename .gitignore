@@ -2,7 +2,10 @@
 *.snap
 *.snap.*delta*
 prime
+
+# vscode pičoviny
 .history
+.vscode
 
 #distutills pičoviny
 MANIFEST
