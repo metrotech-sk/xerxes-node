@@ -6,13 +6,13 @@ from distutils.core import setup
 files = ["static/*"]
 
 setup(name = "xerxes-node",
-    version = "0.5",
+    version = "0.6",
     description = "Xerxes monitoring node app",
     author = "themladypan",
     author_email = "stanislav@rubint.sk",
     url = "rubint.sk",
     packages = ['xerxes'],
     package_data = {'xerxes' : files },
-    scripts = ["worker", "probe"],
+    scripts = ["xerxes-worker"],
     long_description = """Really long text here.""" 
 ) 

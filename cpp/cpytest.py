@@ -11,7 +11,7 @@ from cppyy.gbl import Xerxes as X
 
 rs485 = X.RS485("/dev/ttyUSB0")
 comm = X.Protocol(rs485, 0x00)
-leaf1 = X.PLeaf(0x01, comm, 0.020)
+# leaf1 = X.PLeaf(0x01, comm, 0.020)
 
 leaves = []
 found_addresses = []

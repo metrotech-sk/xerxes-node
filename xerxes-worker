@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from xerxes.spi import ABP
 import xerxes.settings as settings
 from pprint import pprint as print
 import os
@@ -10,7 +9,16 @@ import socket
 import logging
 from pymongo import MongoClient
 from statistics import stdev
-from systemd import journal
+# from systemd import journal
+
+
+import cppyy, os, time
+cppyy.add_include_path("cpp/include")
+[cppyy.include(i) for i in os.listdir("cpp/include")]
+cppyy.add_library_path("./build")
+cppyy.load_library("libxerxes")
+from cppyy.gbl import Xerxes as X
+
 
 HOSTNAME = socket.gethostname()
 
@@ -18,14 +26,34 @@ def home_dir(path):
     return os.path.join(os.path.expanduser("~"), path)
 
 
+def discover(comm, leaves, addr_range=32):
+    found_addresses = []
+
+    log.info("scanning...")
+
+    for i in range(3):
+        for addr in range(1, 32):
+            if addr in found_addresses:
+                continue
+
+            try:
+                tmp_leaf = X.PLeaf(addr, comm, 0.020)
+                tmp_leaf.read()
+                if addr not in found_addresses:
+                    found_addresses.append(addr)
+                    leaves.append(tmp_leaf)
+                    log.info(f"leaf: {addr} found!")
+            except cppyy.gbl.std.runtime_error:
+                pass
+    return found_addresses
+
+
 def run(db, sample_period=1, log_period=60):
-    col_test = db.alfa[HOSTNAME]
+    col_test = db.beta[HOSTNAME]
     # inserted_id = col_test.insert_one(post).inserted_id
 
-    sensor = ABP(0, 0, 22, p_min=0, p_max=611.83)
     current_period = log_period
     last_cycle = time.time()
-    pressures = []
 
     while True:
         if os.access("/sys/class/thermal/thermal_zone0/temp", os.R_OK):
@@ -34,10 +62,16 @@ def run(db, sample_period=1, log_period=60):
         else:
             cpu_temp = -1
 
-        for i in range(10):
-            pressures.append(sensor.get_pressure())
-            sensor.wait_for_next()
-        sensor_temp = sensor.get_temp()
+        sensor_data = {}
+        for leaf in leaves:
+            vals = leaf.read()
+            sensor_data[str(leaf.getAddr())] = {
+                "pressure": vals.pressure.getmmH2O(),
+                "temp_sensor": vals.temp_sens.getCelsius(),
+                "external_temp1": vals.temp_ext1.getCelsius(),
+                "external_temp2": vals.temp_ext2.getCelsius()
+            }
+            
 
         cycletime=time.time() - last_cycle
         time.sleep(sample_period-cycletime)
@@ -49,20 +83,16 @@ def run(db, sample_period=1, log_period=60):
             data = {
                 "type": "measurement",
                 "cpu_temp": cpu_temp/1000.0,
-                "sensor_temp": sensor_temp,
-                "pressure_min": min(pressures),
-                "pressure_max": max(pressures),
-                "pressure_avg": sum(pressures)/len(pressures),
-                "pressure_stdev": stdev(pressures),
-                "unit": "mm",
+                "readings": sensor_data,
+                "units": "mmH2O, °C",
                 # "hostname": HOSTNAME,
                 "timestamp": time.time(),
                 "gm_time": time.asctime(time.gmtime())
             }
+
             new_id = col_test.insert_one(data)
             log.info(f"New log pushed: {new_id}")
             log.debug(f"Data: {data}")
-            pressures = []
 
 
 if __name__ == "__main__":
@@ -72,12 +102,12 @@ if __name__ == "__main__":
     logging.basicConfig(
         format='%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
         datefmt='%m/%d/%Y %I:%M:%S %p',
-        filename='/dev/shm/latest.log', 
+        filename='/tmp/xerxes.log', 
         level=logging._nameToLevel[settings.logging_level]
     )
     log = logging.getLogger(__name__)
-    handler = logging.StreamHandler(stream=journal)
-    log.addHandler(handler)
+    # handler = logging.StreamHandler(stream=journal)
+    # log.addHandler(handler)
     log.warning("Logger started")
 
     database = MongoClient(settings.mongo_URI)
@@ -85,4 +115,13 @@ if __name__ == "__main__":
 
     log.info(f"Databases present: {database.alfa.list_collection_names()}")
     log.info(f"Current working dir: {os.getcwd()}")
+  
+    rs485 = X.RS485(settings.use_device)
+    comm = X.Protocol(rs485, 0x00)
+    leaves = []
+
+    adresses_discovered = discover(comm, leaves)
+    log.info("Discovered these leaves:")
+    log.info(adresses_discovered)
+
     run(database, sample_period=settings.sample_period, log_period=settings.update_period)
