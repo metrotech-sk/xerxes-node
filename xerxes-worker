@@ -9,13 +9,16 @@ import socket
 import logging
 from pymongo import MongoClient
 from statistics import stdev
-# from systemd import journal
+from systemd import journal
+
+file_path = os.path.realpath(__file__)
+script_dir = os.path.dirname(file_path)
 
 
 import cppyy, os, time
-cppyy.add_include_path("cpp/include")
-[cppyy.include(i) for i in os.listdir("cpp/include")]
-cppyy.add_library_path("./build")
+cppyy.add_include_path(os.path.join(script_dir, "cpp/include"))
+[cppyy.include(i) for i in os.listdir(os.path.join(script_dir, "cpp/include"))]
+cppyy.add_library_path(os.path.join(script_dir, "build"))
 cppyy.load_library("libxerxes")
 from cppyy.gbl import Xerxes as X
 
@@ -64,13 +67,16 @@ def run(db, sample_period=1, log_period=60):
 
         sensor_data = {}
         for leaf in leaves:
-            vals = leaf.read()
-            sensor_data[str(leaf.getAddr())] = {
-                "pressure": vals.pressure.getmmH2O(),
-                "temp_sensor": vals.temp_sens.getCelsius(),
-                "external_temp1": vals.temp_ext1.getCelsius(),
-                "external_temp2": vals.temp_ext2.getCelsius()
-            }
+            try:
+                vals = leaf.read()
+                sensor_data[str(leaf.getAddr())] = {
+                    "pressure": vals.pressure.getmmH2O(),
+                    "temp_sensor": vals.temp_sens.getCelsius(),
+                    "external_temp1": vals.temp_ext1.getCelsius(),
+                    "external_temp2": vals.temp_ext2.getCelsius()
+                }
+            except cppyy.gbl.std.runtime_error:
+                pass
             
 
         cycletime=time.time() - last_cycle
@@ -106,8 +112,12 @@ if __name__ == "__main__":
         level=logging._nameToLevel[settings.logging_level]
     )
     log = logging.getLogger(__name__)
-    # handler = logging.StreamHandler(stream=journal)
-    # log.addHandler(handler)
+    try:
+        handler = logging.StreamHandler(stream=journal)
+        log.addHandler(handler)
+    except AttributeError:
+        log.error("unable to open systemd journal")
+
     log.warning("Logger started")
 
     database = MongoClient(settings.mongo_URI)
@@ -116,12 +126,16 @@ if __name__ == "__main__":
     log.info(f"Databases present: {database.alfa.list_collection_names()}")
     log.info(f"Current working dir: {os.getcwd()}")
   
-    rs485 = X.RS485(settings.use_device)
+    if settings.use_hw_flow:
+        hw_flow_pin = X.GpioPin(settings.hw_flow_pin_nr)
+        rs485 = X.RS485(settings.use_device, hw_flow_pin)
+    else:
+        rs485 = X.RS485(settings.use_device)
     comm = X.Protocol(rs485, 0x00)
     leaves = []
 
     adresses_discovered = discover(comm, leaves)
-    log.info("Discovered these leaves:")
-    log.info(adresses_discovered)
+    log.warning("Discovered these leaves:")
+    log.warning(adresses_discovered)
 
     run(database, sample_period=settings.sample_period, log_period=settings.update_period)
