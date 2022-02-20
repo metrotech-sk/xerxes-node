@@ -8,8 +8,6 @@
 #include "protocol.h"
 #include "p_leaf.h"
 
-#include "gpio_pin.h"
-
 #include <libserial/SerialPort.h>
 
 using namespace std;
@@ -22,15 +20,13 @@ int main(int argc, char** argv){
 
     uint8_t next_char;
 
-    Xerxes::GpioPin *gpio18 = new Xerxes::GpioPin();//18);
-    //gpio18->MakeOutput();
     cout << argv[0] << endl;
 
     string ttyDev = string{argv[1]};
     cout << "using: " << ttyDev << endl;
     duration<double, milli> timeout{atoi(argv[2])};
 
-    Xerxes::RS485 *rs485 = new Xerxes::RS485(ttyDev, gpio18);
+    Xerxes::RS485 *rs485 = new Xerxes::RS485(ttyDev);
 
     // open protocol, my addres 0x00;
     Xerxes::Protocol *xerxes = new Xerxes::Protocol(rs485, 0x00);

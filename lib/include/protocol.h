@@ -6,12 +6,21 @@
 #include <numeric>
 #include <chrono>
 
+#include "exceptions.h"
 #include "bus.h"
 
 #define SOH 0x01
 #define SOT 0x02
 
 namespace Xerxes{
+
+struct XerxesMessage{
+    uint8_t sender;
+    uint8_t destination;
+    uint8_t length;
+    uint32_t msgid;
+    std::vector<uint8_t> payload;
+};
 
 class Protocol
 {  
@@ -26,9 +35,10 @@ class Protocol
     void send(const uint8_t &t_destination, const uint32_t &data);
     void send(const uint8_t &t_destination, const std::string &data);
 
-    std::vector<uint8_t> read(const std::chrono::duration<double> &t_timeout);
+    std::vector<uint8_t> receiveRaw(const double &t_timeout_s);
+    XerxesMessage receive(const double &t_timeout_s);
     
-    void readToBuf(std::vector<uint8_t> &t_buffer, const std::chrono::duration<double> &t_timeout);
+    void readToBuf(std::vector<uint8_t> &t_buffer, const double &t_timeout);
 
     uint8_t my_addr;
 
@@ -40,7 +50,7 @@ class Protocol
     void addChecksum(std::vector<uint8_t> &buffer);
     void addWord(const uint32_t &t_word, std::vector<uint8_t> &t_buffer);
 
-
+    XerxesMessage last_message;
 };
 
 } // namespace Xerxes

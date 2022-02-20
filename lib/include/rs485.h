@@ -11,6 +11,7 @@
 
 #include "bus.h"
 #include "stopwatch.h"
+#include "exceptions.h"
 
 namespace Xerxes{
 
@@ -30,11 +31,8 @@ class RS485: public Bus
     RS485(const std::string &t_device);
     ~RS485();
 
-
     std::vector<uint8_t> read(const std::chrono::duration<double> t_timeout);
     int write(const std::vector<uint8_t> &t_message);
-
-
 };
 
 } // namespace Xerxes

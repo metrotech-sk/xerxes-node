@@ -102,7 +102,7 @@ vector<uint8_t> RS485::read(const chrono::duration<double> t_timeout)
     }
     if(sw.elapsed())
     {
-        throw runtime_error("Message read timed out");
+        throw TimeoutExpired();
     }
 
     return to_return;

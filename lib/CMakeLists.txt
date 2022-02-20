@@ -10,7 +10,7 @@ pkg_check_modules(SERIAL libserial)
 
 include_directories("./include")
 
-add_library(xerxes SHARED "stopwatch.cpp" "protocol.cpp" "rs485.cpp") 
+add_library(xerxes SHARED "stopwatch.cpp" "protocol.cpp" "rs485.cpp" "p_leaf.cpp") 
 
 target_link_libraries(xerxes ${SERIAL_LIBRARIES})
 
