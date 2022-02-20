@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "${workspaceFolder}/lib",
+    "cmake.sourceDirectory": "${workspaceFolder}/cpp",
     "files.associations": {
         "array": "cpp",
         "*.tcc": "cpp",
