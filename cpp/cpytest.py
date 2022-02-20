@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import cppyy, os, time
-cppyy.add_include_path("cpp/include")
-[cppyy.include(i) for i in os.listdir("cpp/include")]
-cppyy.add_library_path("./build")
-cppyy.load_library("libxerxes")
+import cppyy, os, time, sys
+
+includes = ["Packet.h", "Serialization.h", "PacketSerializer.h", "MsgReader.h", "AsyncMsgReader.h", "rs485.h", "RequestResponseClient.h"]
+for i in includes:
+    cppyy.include(i)
+
+cppyy.add_library_path("/usr/local/lib")
+cppyy.load_library("XeusProtocol")
+cppyy.load_library("SerialBus")
 from cppyy.gbl import Xerxes as X
+from cppyy.gbl import std
+from cppyy.gbl import AsyncMsgReader, MsgReader, RequestResponseClient
+
+
+bus = X.RS485(sys.argv[1])
+amr = AsyncMsgReader[MsgReader](MsgReader(bus, std.chrono.milliseconds(10)))
     
+    
+exit(0)
 
 rs485 = X.RS485("/dev/ttyUSB0")
 comm = X.Protocol(rs485, 0x00)
