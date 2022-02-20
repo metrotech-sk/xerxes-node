@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import cppyy, os, time, sys 
+from dis import disco
+import cppyy, os, time, sys, struct
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
@@ -16,22 +17,19 @@ from cppyy.gbl import std
 from xerxes_node.leaves.pleaf import PLeaf
 
 
-def discover(comm, leaves, addr_range=32):
+def discover(comm, leaves, addr_range=127, repeat=1):
     found_addresses = []
 
-    for i in range(3):
-        for addr in range(1, 32):
+    for i in range(repeat):
+        for addr in range(1, addr_range):
             if addr in found_addresses:
                 continue
 
             try:
-                tmp_leaf = X.PLeaf(addr, comm, 0.020)
-                tmp_leaf.read()
-                if addr not in found_addresses:
-                    found_addresses.append(addr)
-                    leaves.append(tmp_leaf)
-                    log.info(f"leaf: {addr} found!")
-            except cppyy.gbl.std.runtime_error:
+                comm.ping(addr)
+                comm.receive(.02)
+                found_addresses.append(addr)
+            except cppyy.gbl.TimeoutExpired:
                 pass
     return found_addresses
 
@@ -41,10 +39,13 @@ if __name__ == "__main__":
     leaves = []
     pleaf = X.PLeaf(0x01, comm, 0.02)
     
-    while 1:
-        comm.ping(0x01)
-        reply = comm.receive(.02)
-        print(bytes([ord(i) for i in reply.payload]))
+    print(discover(comm, leaves))
+    
+    comm.ping(0x01)
+    reply = comm.receive(.02)
+    reply = bytes([ord(i) for i in reply.payload])
+    struct.unpack("!IIII", reply)
+
         
     # adresses_discovered = discover(comm, leaves)
     

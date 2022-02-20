@@ -194,7 +194,9 @@ XerxesMessage Protocol::receive(const double &t_timeout_s)
     last_message.length = rdbuf.size();
     last_message.msgid = (rdbuf[5]*0x1000000) + (rdbuf[6]*0x10000) + (rdbuf[7]*0x100) + (rdbuf[8]);
     last_message.payload.clear();
-    for(int i=9;i<rdbuf.size();i++)
+
+    // copy the rest = payload except last char = checksum
+    for(int i=9;i<rdbuf.size()-1;i++)
     {
         last_message.payload.push_back(rdbuf.at(i));
     }
