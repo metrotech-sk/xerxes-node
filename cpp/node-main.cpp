@@ -40,7 +40,8 @@ int main(int argc, char** argv){
         for(auto& client : clients)
         {
             auto res = client.call(2);
-            std::cout << "Received: " << std::hex << res->wait(std::chrono::milliseconds(1000)).data << std::endl;
+            auto msg = res->wait(std::chrono::milliseconds(1000));
+            std::cout << "From: " << std::hex << int(msg.header.srcAdr) << " Data: "<< msg.data << std::endl;
         }
         std::this_thread::sleep_for(std::chrono::seconds(1) - (std::chrono::high_resolution_clock::now() - start));
     }
