@@ -15,6 +15,7 @@
 #include <rs485.h>
 #include <signal.h>
 #include <atomic>
+#include <experimental/random>
 
 std::atomic<bool> terminate = false;
 void sig_handler(int signum){
@@ -34,7 +35,7 @@ int main(int argc, char** argv){
     signal(SIGINT,sig_handler);
     signal(SIGTERM,sig_handler);
     std::shared_ptr<ABus> bus = std::make_shared<Xerxes::RS485>("/dev/ttyUSB0");
-    AsyncMsgReader<MsgReader> asyncMsgReader(MsgReader(bus, std::chrono::milliseconds(10)),{});
+    AsyncMsgReader<MsgReader> asyncMsgReader(MsgReader(bus, std::chrono::milliseconds(20)),{});
     //todo initializer list
     std::vector<RequestResponseClient<MsgReader, uint8_t, std::array<uint8_t, 2>>> clients; //= {
 //            std::move(RequestResponseClient<MsgReader, uint8_t, uint8_t> (0, 6, bus, asyncMsgReader))};
@@ -45,7 +46,7 @@ int main(int argc, char** argv){
         const auto start = std::chrono::high_resolution_clock::now();
         for(auto& client : clients)
         {
-            auto res = client.call(34);
+            auto res = client.call(std::experimental::randint(0, 255));
             auto msg = res->wait(std::chrono::milliseconds(1000));
             std::cout << "From: " << std::hex << int(msg.header.srcAdr) << " Data: " << msg.data << std::endl;
         }
