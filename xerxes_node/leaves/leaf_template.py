@@ -17,16 +17,21 @@ class Leaf:
         assert(isinstance(address, int))
         self._address = address
 
-        assert("send" in dir(channel))
-        assert("ping" in dir(channel))
-        assert("receive" in dir(channel))
         self.channel = channel
 
         assert(std_timeout >= 0)
         self.std_timeout = std_timeout
 
     def ping(self):
-        raise NotImplementedError
+        self.channel.ping(self._address)
+        try:
+            return self.channel.receive(self.std_timeout)
+        except X.TimeoutExpired:
+            raise TimeoutError("Timeout expired")
+        except X.InvalidMessageLength:
+            raise IOError("Invalid message received (length)")
+        except X.InvalidMessageChecksum:
+            raise IOError("Invalid message received (checksum)")
 
     def exchange(self, payload: list) -> None:
         # test if payload is list of uchars
@@ -54,3 +59,12 @@ class Leaf:
     @address.setter
     def address(self, val):
         raise NotImplementedError("Address should not be changed")
+
+    def assign_channel(self, channel):
+        assert("send" in dir(channel))
+        assert("ping" in dir(channel))
+        assert("receive" in dir(channel))
+        self.channel = channel
+
+    def __repr__(self) -> str:
+        return f"Leaf(channel={self.channel}, address={self._address}, std_timeout={self.std_timeout})"

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from asyncore import read
+from multiprocessing.sharedctypes import Value
 from xerxes_node.units.nivelation import Nivelation
 from xerxes_node.leaves.leaf_template import Leaf
 from xerxes_node.units.temp import Temperature
@@ -24,7 +26,7 @@ class Medium:
 
 
 class PLeaf(Leaf):
-    def __init__(self, channel, my_addr: int, std_timeout: float, *, t_ext1=False, t_ext2=False, medium: Medium = Medium.WATER):
+    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Medium = Medium.WATER):
         super().__init__(channel, my_addr, std_timeout)
 
         if medium == Medium.ETHYLENEGLYCOL:
@@ -34,10 +36,6 @@ class PLeaf(Leaf):
         else:
             self.conv_func = conv_water
         
-        self.t_ext1 = t_ext1
-        self.t_ext2 = t_ext2
-
-
     def read(self) -> list:
         reply = self.exchange([0])
         reply = bytes([ord(i) for i in reply.payload])
@@ -49,29 +47,36 @@ class PLeaf(Leaf):
         result = [
             Nivelation(values[0]/10, self.conv_func),
             Temperature.from_milli_kelvin(values[1]),
+            Temperature.from_milli_kelvin(values[2]),
+            Temperature.from_milli_kelvin(values[3]),
         ]
-        if self.t_ext1:
-            result.append(
-                Temperature.from_milli_kelvin(values[2]),
-            )
-        if self.t_ext2:
-            result.append(
-                Temperature.from_milli_kelvin(values[3]),
-            )
         
         return result
-    
-    def read_dict(self):
-        vals = self.read()
-        dict_repr = {
-            "nivelation": vals[0].mm,
-            "temp_sens": vals[1].Celsius,
-        }
-        if self.t_ext1:
-            dict_repr["temp_ext1"] = vals[2].Celsius, 
-            
-        if self.t_ext1:
-            dict_repr["temp_ext2"] = vals[3].Celsius, 
-            
-        return dict_repr
 
+    
+    @staticmethod
+    def average(readings):
+        arrlen = len(readings)
+        if arrlen<1:
+            raise ValueError("Unable to calculate average from empty list")
+        
+        n, ts, t1, t2 = [], [], [], []
+        for r in readings:
+            n.append(r[0])
+            ts.append(r[1])
+            t1.append(r[2])
+            t2.append(r[3])
+
+        return Nivelation(sum(n)/arrlen), Temperature(sum(ts)/arrlen), Temperature(sum(t1)/arrlen), Temperature(sum(t2)/arrlen)
+
+    @staticmethod
+    def to_dict(readings):
+        to_return = {
+            "nivelation": readings[0].preffered,
+            "temp_sens": readings[1].preffered,
+            "temp_ext1": readings[2].preffered,
+            "temp_ext2": readings[3].preffered,
+        }
+
+        return to_return
+        

@@ -4,10 +4,15 @@
 from .pressure import Pressure
 
 class Nivelation(Pressure):
-    def __init__(self, value=0, conv_func=1):
+    def __init__(self, value=0, conv_func=lambda x : x):
         self._conversion = conv_func
         super().__init__(value)
 
     @property
     def mm(self):
-        return self._conversion(self.value)
+        converted = self._conversion(self.value)
+        return converted
+
+    @property
+    def preffered(self):
+        return self.mm

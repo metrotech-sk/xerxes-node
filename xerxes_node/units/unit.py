@@ -10,3 +10,9 @@ class Unit:
     @property
     def value(self):
         return self._value
+    
+    def __repr__(self):
+        return f"Unit({self._value})"
+
+    def __radd__(self, other):
+        return self._value + other

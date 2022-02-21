@@ -19,3 +19,10 @@ class Temperature(Unit):
     @staticmethod
     def from_milli_kelvin(mK):
         return Temperature(mK/1000)
+
+    def __repr__(self):
+        return f"Temperature({self._value})"
+    
+    @property
+    def preffered(self):
+        return self.Celsius
