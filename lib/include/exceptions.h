@@ -5,6 +5,10 @@
 #include <string>
 #include <sstream>
 
+
+namespace Xerxes{
+
+
 class TimeoutExpired : public std::exception
 {
   private:
@@ -97,6 +101,8 @@ class InvalidMessageChecksum : public std::exception
     	return message.c_str();
     }
 };
+
+} // namespace Xerxes
 
 
 #endif //EXCEPTIONS_H

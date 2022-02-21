@@ -40,11 +40,11 @@ class Protocol
     
     void readToBuf(std::vector<uint8_t> &t_buffer, const double &t_timeout);
 
-    uint8_t my_addr;
+    uint8_t getMyAddress() const;
 
   private:
     Bus *m_bus;
-
+    uint8_t my_addr;
     std::vector<uint8_t> craftMessage(const uint8_t &t_dst, const std::vector<uint8_t> &payload);
     std::vector<uint8_t> craftPing(const uint8_t &t_dst);
     void addChecksum(std::vector<uint8_t> &buffer);
