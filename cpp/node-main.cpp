@@ -4,6 +4,7 @@
 #include <VectorSerialization.h>
 #include <VectorDeserialization.h>
 #include <PacketSerializer.h>
+#include <VectorCrc.h>
 
 //protocol stuff
 #include <MsgReader.h>
