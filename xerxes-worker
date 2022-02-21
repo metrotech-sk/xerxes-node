@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import xerxes.settings as settings
 from pprint import pprint as print
 import os
 import time
 import socket
 import logging
+import sys
 from pymongo import MongoClient
 from statistics import stdev
 from systemd import journal
+from xerxes_node.leaves.pleaf import PLeaf, Medium
+from xerxes_node.leaves.pleaf import Medium
+import xerxes_node.settings as settings
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
 
 
 import cppyy, os, time
-cppyy.add_include_path(os.path.join(script_dir, "cpp/include"))
-[cppyy.include(i) for i in os.listdir(os.path.join(script_dir, "cpp/include"))]
+cppyy.add_include_path(os.path.join(script_dir, "lib/include"))
+[cppyy.include(i) for i in os.listdir(os.path.join(script_dir, "lib/include"))]
 cppyy.add_library_path(os.path.join(script_dir, "build"))
 cppyy.load_library("libxerxes")
 from cppyy.gbl import Xerxes as X
@@ -29,29 +32,29 @@ def home_dir(path):
     return os.path.join(os.path.expanduser("~"), path)
 
 
-def discover(comm, leaves, addr_range=32):
+def discover(comm, leaves, log, addr_range=32):
     found_addresses = []
 
     log.info("scanning...")
 
     for i in range(3):
-        for addr in range(1, 32):
+        for addr in range(1, addr_range):
             if addr in found_addresses:
                 continue
 
             try:
-                tmp_leaf = X.PLeaf(addr, comm, 0.020)
-                tmp_leaf.read()
                 if addr not in found_addresses:
+                    tmp_leaf = PLeaf(comm, addr, 0.020, medium=Medium.ETHYLENEGLYCOL)
+                    tmp_leaf.read()
                     found_addresses.append(addr)
                     leaves.append(tmp_leaf)
                     log.info(f"leaf: {addr} found!")
-            except cppyy.gbl.std.runtime_error:
-                pass
+            except TimeoutError:
+                log.debug(f"Addr {addr} unavailable.")
     return found_addresses
 
 
-def run(db, sample_period=1, log_period=60):
+def run(db, leaves, sample_period=1, log_period=60):
     col_test = db.beta[HOSTNAME]
     # inserted_id = col_test.insert_one(post).inserted_id
 
@@ -68,18 +71,15 @@ def run(db, sample_period=1, log_period=60):
         sensor_data = {}
         for leaf in leaves:
             try:
-                vals = leaf.read()
-                sensor_data[str(leaf.getAddr())] = {
-                    "pressure": vals.pressure.getmmH2O(),
-                    "temp_sensor": vals.temp_sens.getCelsius(),
-                    "external_temp1": vals.temp_ext1.getCelsius(),
-                    "external_temp2": vals.temp_ext2.getCelsius()
-                }
-            except cppyy.gbl.std.runtime_error:
-                pass
+                vals = leaf.read_dict()
+                sensor_data[str(leaf.address)] = vals
+            except IOError:
+                log.warning(f"message from leaf {leaf.address} is corrupted")
+            except TimeoutError:
+                log.warning(f"Leaf {leaf.address} is not responding.")
             
 
-        cycletime=time.time() - last_cycle
+        cycletime = time.time() - last_cycle
         time.sleep(sample_period-cycletime)
         last_cycle = time.time()
         current_period += sample_period
@@ -90,14 +90,14 @@ def run(db, sample_period=1, log_period=60):
                 "type": "measurement",
                 "cpu_temp": cpu_temp/1000.0,
                 "readings": sensor_data,
-                "units": "mmH2O, °C",
+                "units": "mm, °C",
                 # "hostname": HOSTNAME,
                 "timestamp": time.time(),
                 "gm_time": time.asctime(time.gmtime())
             }
 
             new_id = col_test.insert_one(data)
-            log.info(f"New log pushed: {new_id}")
+            log.info(f"New log pushed: {new_id.inserted_id}")
             log.debug(f"Data: {data}")
 
 
@@ -112,30 +112,32 @@ if __name__ == "__main__":
         level=logging._nameToLevel[settings.logging_level]
     )
     log = logging.getLogger(__name__)
+    
     try:
-        handler = logging.StreamHandler(stream=journal)
-        log.addHandler(handler)
+        log.addHandler(journal.JournalHandler())
     except AttributeError:
         log.error("unable to open systemd journal")
 
+    
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    log.addHandler(handler)
+
     log.warning("Logger started")
+
+    rs485 = X.RS485(settings.use_device)
+    comm = X.Protocol(rs485, 0x00)
+    leaves = []
+
+    adresses_discovered = discover(comm, leaves, log)
+    log.warning("Discovered these leaves:")
+    log.warning(adresses_discovered)
 
     database = MongoClient(settings.mongo_URI)
     log.info("Database connected")
 
-    log.info(f"Databases present: {database.alfa.list_collection_names()}")
+    log.info(f"Databases present: {database.beta.list_collection_names()}")
     log.info(f"Current working dir: {os.getcwd()}")
   
-    if settings.use_hw_flow:
-        hw_flow_pin = X.GpioPin(settings.hw_flow_pin_nr)
-        rs485 = X.RS485(settings.use_device, hw_flow_pin)
-    else:
-        rs485 = X.RS485(settings.use_device)
-    comm = X.Protocol(rs485, 0x00)
-    leaves = []
 
-    adresses_discovered = discover(comm, leaves)
-    log.warning("Discovered these leaves:")
-    log.warning(adresses_discovered)
-
-    run(database, sample_period=settings.sample_period, log_period=settings.update_period)
+    run(database, leaves, settings.sample_period, settings.update_period)

@@ -14,7 +14,8 @@ cppyy.load_library("libxerxes")
 from cppyy.gbl import Xerxes as X
 from cppyy.gbl import std
 
-from xerxes_node.leaves.pleaf import PLeaf
+from xerxes_node.leaves.pleaf import PLeaf, Medium
+
 
 
 def discover(comm, leaves, addr_range=127, repeat=1):
@@ -33,19 +34,13 @@ def discover(comm, leaves, addr_range=127, repeat=1):
                 pass
     return found_addresses
 
+
 if __name__ == "__main__":
     rs485 = X.RS485(sys.argv[1])
     comm = X.Protocol(rs485, 0x00)
     leaves = []
-    pleaf = X.PLeaf(0x01, comm, 0.02)
-    
-    print(discover(comm, leaves))
-    
-    comm.ping(0x01)
-    reply = comm.receive(.02)
-    reply = bytes([ord(i) for i in reply.payload])
-    struct.unpack("!IIII", reply)
-
-        
+    # pleaf = X.PLeaf(0x01, comm, 0.02)
+    pleaf = PLeaf(comm, 0x01, 0.02, medium=Medium.SILOXANE)
+            
     # adresses_discovered = discover(comm, leaves)
     
