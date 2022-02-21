@@ -183,23 +183,42 @@ void Protocol::readToBuf(std::vector<uint8_t> &t_buffer, const double &t_timeout
     
 XerxesMessage Protocol::receive(const double &t_timeout_s)
 {
-    std::vector<uint8_t> rdbuf;
-    Protocol::readToBuf(rdbuf, t_timeout_s);
-    if(rdbuf.size()<1)
+    using hrclock = std::chrono::high_resolution_clock;
+    hrclock::time_point start = hrclock::now();
+    chrono::duration<double> time_window(t_timeout_s);
+    
+    do
     {
-        throw TimeoutExpired();
-    }
-    last_message.sender = rdbuf.at(2);
-    last_message.destination = rdbuf.at(3);
-    last_message.length = rdbuf.size();
-    last_message.msgid = (rdbuf[5]*0x1000000) + (rdbuf[6]*0x10000) + (rdbuf[7]*0x100) + (rdbuf[8]);
-    last_message.payload.clear();
+        chrono::duration<double> elapsed = chrono::duration_cast<chrono::duration<double>>(hrclock::now() - start);
+        chrono::duration<double> remaining = chrono::duration_cast<chrono::duration<double>>(time_window - elapsed);
+        std::vector<uint8_t> rdbuf;
+        if(remaining.count() < 0)
+        {
+            throw TimeoutExpired();
+        }
+        Protocol::readToBuf(rdbuf, remaining.count());
+        if(rdbuf.size()<1)
+        {
+            throw TimeoutExpired();
+        }
+        last_message.sender = rdbuf.at(2);
+        last_message.destination = rdbuf.at(3);
+        last_message.length = rdbuf.size();
+        last_message.msgid = (rdbuf[5]*0x1000000) + (rdbuf[6]*0x10000) + (rdbuf[7]*0x100) + (rdbuf[8]);
+        last_message.payload.clear();
 
-    // copy the rest = payload except last char = checksum
-    for(int i=9;i<rdbuf.size()-1;i++)
-    {
-        last_message.payload.push_back(rdbuf.at(i));
-    }
+        // copy the rest = payload except last char = checksum
+        for(int i=9;i<rdbuf.size()-1;i++)
+        {
+            last_message.payload.push_back(rdbuf.at(i));
+        }
+    } while (last_message.destination != this->my_addr);
+
     return last_message;
 
+}
+
+
+uint8_t Protocol::getMyAddress() const{
+    return this->my_addr;
 }
