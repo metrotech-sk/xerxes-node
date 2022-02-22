@@ -57,25 +57,39 @@ class PLeaf(Leaf):
     @staticmethod
     def average(readings):
         arrlen = len(readings)
+        invalid = 0
+        valid = 0
+
         if arrlen<1:
             raise ValueError("Unable to calculate average from empty list")
         
         n, ts, t1, t2 = [], [], [], []
         for r in readings:
-            n.append(r[0])
-            ts.append(r[1])
-            t1.append(r[2])
-            t2.append(r[3])
+            if isinstance(r, list):
+                n.append(r[0])
+                ts.append(r[1])
+                t1.append(r[2])
+                t2.append(r[3])
+                valid += 1
+            else:
+                invalid += 1
 
-        return Nivelation(sum(n)/arrlen), Temperature(sum(ts)/arrlen), Temperature(sum(t1)/arrlen), Temperature(sum(t2)/arrlen)
+        if valid == 0:
+            raise ValueError("No valid data received")
+
+        return Nivelation(sum(n)/valid), Temperature(sum(ts)/valid), Temperature(sum(t1)/valid), Temperature(sum(t2)/valid), invalid
 
     @staticmethod
     def to_dict(readings):
+        if isinstance(readings[0], type(None)):
+            return None
+
         to_return = {
             "nivelation": readings[0].preffered,
             "temp_sens": readings[1].preffered,
             "temp_ext1": readings[2].preffered,
             "temp_ext2": readings[3].preffered,
+            "errors": readings[4]
         }
 
         return to_return

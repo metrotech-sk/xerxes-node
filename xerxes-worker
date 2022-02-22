@@ -61,6 +61,7 @@ def run(db, leaves, sample_period=1, log_period=60):
         
         if current_period >= log_period:
             current_period = 0
+            
             averages = network.average()
             sensor_data = network.to_dict(averages)
 

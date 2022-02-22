@@ -5,7 +5,6 @@ import cppyy, os, sys
 from xerxes_node import config
 from xerxes_node.network import XerxesNetwork
 
-from xerxes_node.utils import discover
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
@@ -20,7 +19,7 @@ from xerxes_node.leaves.pleaf import PLeaf
 
 
 if __name__ == "__main__":
-    rs485 = X.RS485(sys.argv[1])
+    rs485 = X.RS485(config.use_device)
     comm = X.Protocol(rs485, 0x00)
     leaves = []
     for key in config.leaves.keys():

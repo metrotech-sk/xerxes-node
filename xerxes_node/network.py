@@ -8,8 +8,6 @@ from subprocess import TimeoutExpired
 from threading import Lock
 from threading import Thread
 
-from numpy import average
-
 from xerxes_node.leaves.pleaf import PLeaf
 
 
@@ -76,8 +74,11 @@ class XerxesNetwork:
             leaf_vals = []
             for reading in self._readings:
                 leaf_vals.append(reading.get(addr))
-                
-            averages[addr] = list(PLeaf.average(leaf_vals))
+
+            try:    
+                averages[addr] = list(PLeaf.average(leaf_vals))
+            except ValueError:
+                averages[addr] = [None, None, None, None, None]
         
         if flush:
             self._readings=[]
