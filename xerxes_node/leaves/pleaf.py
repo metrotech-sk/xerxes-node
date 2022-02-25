@@ -14,7 +14,7 @@ def conv_ethyleneglycol(Pa):
     return Pa/(g*1.1132)
 
 def conv_water(Pa):
-    return Pa/g
+    return Pa/(g*1)
 
 def conv_siloxane(Pa):
     return Pa/(g*0.965)
@@ -45,7 +45,7 @@ class PLeaf(Leaf):
 
         # convert to sensible units
         result = [
-            Nivelation(values[0]/10, self.conv_func),
+            Nivelation(values[0]/1000, self.conv_func),  # pressure in 
             Temperature.from_milli_kelvin(values[1]),
             Temperature.from_milli_kelvin(values[2]),
             Temperature.from_milli_kelvin(values[3]),
@@ -77,7 +77,7 @@ class PLeaf(Leaf):
         if valid == 0:
             raise ValueError("No valid data received")
 
-        return Nivelation(sum(n)/valid), Temperature(sum(ts)/valid), Temperature(sum(t1)/valid), Temperature(sum(t2)/valid), invalid
+        return Nivelation(sum(n)/valid, conv_func=n[0]._conversion), Temperature(sum(ts)/valid), Temperature(sum(t1)/valid), Temperature(sum(t2)/valid), invalid
 
     @staticmethod
     def to_dict(readings):

@@ -11,9 +11,7 @@ leaves = {
     0x01: "nivelation",
     0x02: "nivelation",
     0x03: "nivelation",
-    0x05: "nivelation",
-    0x06: "nivelation",
-    0x15: "nivelation",
-    0x18: "nivelation",
-    0x1f: "nivelation",
+    
+    0x1f: "nivelation",  # referencny
 }
+reference_cell = 0x1f
