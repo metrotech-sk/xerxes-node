@@ -5,7 +5,7 @@ import cppyy, os, sys
 from xerxes_node import config
 from xerxes_node.network import XerxesNetwork
 from xerxes_node.parser import Parser
-from xerxes_node.leaves.pleaf import PLeaf
+from xerxes_node.leaves.pleaf import PLeaf, PLeafData
 
 
 file_path = os.path.realpath(__file__)
@@ -18,8 +18,6 @@ cppyy.load_library("libxerxes")
 from cppyy.gbl import Xerxes as X
 
 
-
-
 if __name__ == "__main__":
     rs485 = X.RS485(config.use_device)
     comm = X.Protocol(rs485, 0x00)
@@ -29,4 +27,5 @@ if __name__ == "__main__":
             leaves.append(PLeaf(comm, key, std_timeout=0.02, medium=config.used_medium))
 
     network = XerxesNetwork(leaves, std_timeout_s=0.2)
+    network.poll()
     
