@@ -4,6 +4,8 @@
 import cppyy, os, sys
 from xerxes_node import config
 from xerxes_node.network import XerxesNetwork
+from xerxes_node.parser import Parser
+from xerxes_node.leaves.pleaf import PLeaf
 
 
 file_path = os.path.realpath(__file__)
@@ -15,7 +17,7 @@ cppyy.add_library_path(os.path.join(script_dir, "build"))
 cppyy.load_library("libxerxes")
 from cppyy.gbl import Xerxes as X
 
-from xerxes_node.leaves.pleaf import PLeaf
+
 
 
 if __name__ == "__main__":
@@ -27,3 +29,4 @@ if __name__ == "__main__":
             leaves.append(PLeaf(comm, key, std_timeout=0.02, medium=config.used_medium))
 
     network = XerxesNetwork(leaves, std_timeout_s=0.2)
+    

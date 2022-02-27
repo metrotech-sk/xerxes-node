@@ -14,6 +14,7 @@ from xerxes_node.leaves.pleaf import PLeaf, Medium
 from xerxes_node.leaves.pleaf import Medium
 from xerxes_node.network import XerxesNetwork
 import xerxes_node.config as config
+from xerxes_node.parser import Parser
 
 
 file_path = os.path.realpath(__file__)
@@ -63,7 +64,7 @@ def run(db, leaves, sample_period=1, log_period=60):
             current_period = 0
             
             averages = network.average()
-            sensor_data = network.to_dict(averages)
+            sensor_data = Parser.to_dict(averages, config.reference_cell)
 
             data = {
                 "type": "measurement",

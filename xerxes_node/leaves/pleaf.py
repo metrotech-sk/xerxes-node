@@ -80,12 +80,13 @@ class PLeaf(Leaf):
         return Nivelation(sum(n)/valid, conv_func=n[0]._conversion), Temperature(sum(ts)/valid), Temperature(sum(t1)/valid), Temperature(sum(t2)/valid), invalid
 
     @staticmethod
-    def to_dict(readings):
+    def to_dict(readings, offset=0):
         if isinstance(readings[0], type(None)):
             return None
 
         to_return = {
-            "nivelation": readings[0].preffered,
+            "nivelation_raw": readings[0].preffered,
+            "nivelation": readings[0].preffered - offset,
             "temp_sens": readings[1].preffered,
             "temp_ext1": readings[2].preffered,
             "temp_ext2": readings[3].preffered,

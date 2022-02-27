@@ -16,3 +16,12 @@ class Unit:
 
     def __radd__(self, other):
         return self._value + other
+
+    def __add__(self, other):
+        return self._value + other
+
+    def __sub__(self, other):
+        return self._value - other
+    
+    def __rsub__(self, other):
+        return other - self._value
