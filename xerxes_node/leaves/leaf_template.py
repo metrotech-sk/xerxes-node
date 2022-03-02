@@ -17,7 +17,7 @@ class Leaf:
         assert(isinstance(address, int))
         self._address = address
 
-        self.channel = channel
+        self.assign_channel(channel)
 
         assert(std_timeout >= 0)
         self.std_timeout = std_timeout

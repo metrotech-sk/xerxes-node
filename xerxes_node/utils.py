@@ -3,6 +3,7 @@
 
 
 import logging
+import os
 from xerxes_node.leaves.leaf_template import Leaf
 
 
@@ -27,3 +28,11 @@ def discover(comm, leaves, addr_range=32):
                 log.debug(f"Addr {addr} unavailable.")
     return found_addresses
 
+
+def get_cpu_temp_celsius():
+    if os.access("/sys/class/thermal/thermal_zone0/temp", os.R_OK):
+        with open ("/sys/class/thermal/thermal_zone0/temp", "r") as tf:
+            cpu_temp = int(tf.read())
+        return cpu_temp/1000
+    else:
+        raise IOError("CPU temperature unavailable")

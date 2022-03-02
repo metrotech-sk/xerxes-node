@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 
-from xerxes_node.leaves.pleaf import PLeaf
+from pprint import pprint
+from typing import Dict, List
+from xerxes_node.leaves.pleaf import AveragePLeafData, PLeaf
 
 
 class Parser:
     @staticmethod
-    def to_dict(averages, reference_addr):
+    def to_dict(averages: Dict, reference_addr: int):
         to_return = dict()
-        # PLeaf.to_dict()
         for key in averages:
-            # TODO: toto dole nie je pekné, prepísať @themladypan
-            to_return[hex(key)] = PLeaf.to_dict(averages[key], averages[reference_addr][0].preffered)
+            to_return[hex(key)] = PLeaf.to_dict(averages[key], offset=averages[reference_addr].nivelation.preffered)
 
         return to_return

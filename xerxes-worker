@@ -15,6 +15,7 @@ from xerxes_node.leaves.pleaf import Medium
 from xerxes_node.network import XerxesNetwork
 import xerxes_node.config as config
 from xerxes_node.parser import Parser
+from xerxes_node.utils import get_cpu_temp_celsius
 
 
 file_path = os.path.realpath(__file__)
@@ -37,22 +38,14 @@ def home_dir(path):
 
 
 def run(db, leaves, sample_period=1, log_period=60):
-    col_test = db.beta[HOSTNAME]
-    # inserted_id = col_test.insert_one(post).inserted_id
+    collection = db[HOSTNAME]
 
     current_period = log_period
     last_cycle = time.time()
 
     network = XerxesNetwork(leaves, std_timeout_s=0.2)
 
-
     while True:
-        if os.access("/sys/class/thermal/thermal_zone0/temp", os.R_OK):
-            with open ("/sys/class/thermal/thermal_zone0/temp", "r") as tf:
-                cpu_temp = int(tf.read())
-        else:
-            cpu_temp = -1
-
         network.poll()
 
         cycletime = time.time() - last_cycle
@@ -64,19 +57,21 @@ def run(db, leaves, sample_period=1, log_period=60):
             current_period = 0
             
             averages = network.average()
-            sensor_data = Parser.to_dict(averages, config.reference_cell)
+            sensor_data = Parser.to_dict(averages, config.reference_leaf_addr)
 
             data = {
-                "type": "measurement",
-                "cpu_temp": cpu_temp/1000.0,
-                "readings": sensor_data,
-                "units": "mm, °C",
-                # "hostname": HOSTNAME,
-                "timestamp": time.time(),
-                "gm_time": time.asctime(time.gmtime())
+                "measurement": sensor_data,
+                "info": {
+                    "units": "mm, °C",
+                    "cpu_temp": get_cpu_temp_celsius()
+                },           
+                "time":{
+                    "epoch": time.time(),
+                    "gm_time": time.asctime(time.gmtime()),
+                }     
             }
 
-            new_id = col_test.insert_one(data)
+            new_id = collection.insert_one(data)
             log.info(f"New log pushed: {new_id.inserted_id}")
             log.debug(f"Data: {data}")
 
@@ -114,12 +109,17 @@ if __name__ == "__main__":
         if config.leaves.get(key) == "nivelation":
             leaves.append(PLeaf(comm, key, std_timeout=0.02, medium=config.used_medium))
 
+    shard = MongoClient(config.mongo_URI)
+    database = shard.get_database(config.use_database)
+    log.info(f"Database {database.name} connected")
 
-    database = MongoClient(config.mongo_URI)
-    log.info("Database connected")
-
-    log.info(f"Databases present: {database.beta.list_collection_names()}")
-    log.info(f"Current working dir: {os.getcwd()}")
+    log.info(f"Using collection: {database.name}.{HOSTNAME}")
+    log.debug(f"Current working dir: {os.getcwd()}")
   
 
-    run(database, leaves, config.sample_period, config.update_period)
+    run(
+        db=database, 
+        leaves=leaves, 
+        sample_period=config.sample_period, 
+        log_period=config.update_period
+    )

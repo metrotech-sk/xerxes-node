@@ -76,21 +76,12 @@ class XerxesNetwork:
                 leaf_vals.append(reading.get(addr))
 
             try:    
-                averages[addr] = list(PLeaf.average(leaf_vals))
+                averages[addr] = PLeaf.average(leaf_vals)
             except ValueError:
-                averages[addr] = [None, None, None, None, None]
+                averages[addr] = None
         
         if flush:
             self._readings=[]
 
         return averages
-
-    @staticmethod
-    def to_dict(averages):
-        to_return = dict()
-        # PLeaf.to_dict()
-        for key in averages:
-            to_return[hex(key)] = PLeaf.to_dict(averages[key])
-
-        return to_return
 
