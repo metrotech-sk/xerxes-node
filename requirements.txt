@@ -1,11 +1,11 @@
 pymongo==3.12.0
 dnspython==2.1.0
-PyYAML==5.3.1
+# PyYAML==5.3.1 # not longer required
 # spidev==3.5 no longer required
-# wiringpi==2.60.1 no longer required
+# wiringpi==2.60.1 no longer required
 cppyy==2.2.0
 cppyy-backend==1.14.7
 cppyy-cling==6.25.2
 CPyCppyy==1.12.8
 
-# systemd-python==234
+# systemd-python==234
