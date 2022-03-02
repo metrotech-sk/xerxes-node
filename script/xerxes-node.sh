@@ -4,15 +4,16 @@
 start() {
     # code to start app comes here 
     # example: daemon program_name &
-    /home/stanke/xerxes-node/venv/bin/python /home/stanke/xerxes-node/xerxes-worker
-    #source .venv/bin/activate
-    #authbind gunicorn
+    # TODO (@theMladyPan) toto prerobiť na relatívne cesty
+    /home/stanke/xerxes-node/venv/bin/python /home/stanke/xerxes-node/xerxes-worker&PID=$!
 }
 
 stop() {
     # code to stop app comes here 
     # example: killproc program_name
-    echo killing worker
+    # TODO (@theMladyPan) toto lepšie spraviť
+    echo killing worker $PID
+    kill $PID
     # killall xerxes-worker
 }
 
