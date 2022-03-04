@@ -5,8 +5,7 @@ start() {
     # code to start app comes here 
     # example: daemon program_name &
     # TODO (@theMladyPan) toto prerobiť na relatívne cesty
-    /home/stanke/xerxes-node/venv/bin/python /home/stanke/xerxes-node/xerxes-worker&PID=$!
-    echo "xerxes-worker started with PID $PID"
+    /home/stanke/xerxes-node/venv/bin/python /home/stanke/xerxes-node/xerxes-worker
 }
 
 stop() {
