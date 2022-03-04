@@ -3,26 +3,12 @@
 
 from dataclasses import dataclass, is_dataclass
 from typing import List
+from xerxes_node.medium import Medium
 from xerxes_node.units.nivelation import Nivelation
 from xerxes_node.leaves.leaf_template import Leaf
 from xerxes_node.units.temp import Temperature
 import struct
 
-g = 9.80665
-
-def conv_ethyleneglycol(Pa):
-    return Pa/(g*1.1132)
-
-def conv_water(Pa):
-    return Pa/(g*1)
-
-def conv_siloxane(Pa):
-    return Pa/(g*0.965)
-
-class Medium:
-    WATER=0
-    ETHYLENEGLYCOL=1
-    SILOXANE=2
 
 @dataclass
 class PLeafData:
@@ -42,15 +28,10 @@ class AveragePLeafData:
 
 
 class PLeaf(Leaf):
-    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Medium = Medium.WATER):
+    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Medium = Medium.water):
         super().__init__(channel, my_addr, std_timeout)
 
-        if medium == Medium.ETHYLENEGLYCOL:
-            self.conv_func = conv_ethyleneglycol
-        elif medium == Medium.SILOXANE:
-            self.conv_func = conv_siloxane
-        else:
-            self.conv_func = conv_water
+        self.conv_func = medium
         
     def read(self) -> list:
         reply = self.exchange([0])

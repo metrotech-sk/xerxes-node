@@ -1,4 +1,4 @@
-from xerxes_node.leaves.pleaf import Medium
+from xerxes_node.medium import Medium
 
 
 logging_level = 'DEBUG' # DEBUG INFO WARNING ERROR
@@ -7,7 +7,7 @@ use_database = "pri_sajbach"
 sample_period = 1
 update_period = 60
 use_device = "/dev/ttyS0"
-used_medium = Medium.WATER
+used_medium = Medium.propyleneglycol
 leaves = {
     0x01: "nivelation",
     0x02: "nivelation",
