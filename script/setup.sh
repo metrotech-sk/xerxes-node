@@ -27,7 +27,7 @@ fi
 echo "updating system..."
 apt update
 apt upgrade -y
-apt install -y network-manager python3-dev build-essential python3.8-venv libsystemd-dev whois
+cat requirements.apt | xargs apt install -y
 
 snap install zerotier
 
@@ -49,6 +49,7 @@ usermod -aG sudo $xerxes_user
 echo "Adding user to spiuser GROUP..."
 groupadd -f --system spiuser
 usermod -a -G spiuser $xerxes_user
+usermod -aG dialout $xerxes_user
 
 su $xerxes_user
 cd /home/$xerxes_user

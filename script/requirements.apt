@@ -1,0 +1,10 @@
+network-manager
+python3-dev 
+build-essential 
+python3-venv 
+libsystemd-dev 
+whois 
+libserial-dev 
+cmake 
+pkg-config
+picocom
