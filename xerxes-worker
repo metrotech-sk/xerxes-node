@@ -57,7 +57,10 @@ def run(db, leaves, sample_period=1, log_period=60):
             current_period = 0
             
             averages = network.average()
-            sensor_data = Parser.to_dict(averages, config.reference_leaf_addr)
+            if isinstance(averages[config.reference_leaf_addr], type(None)):
+                sensor_data = {}
+            else:
+                sensor_data = Parser.to_dict(averages, config.reference_leaf_addr)
 
             data = {
                 "measurement": sensor_data,

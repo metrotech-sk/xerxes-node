@@ -6,14 +6,15 @@ start() {
     # example: daemon program_name &
     # TODO (@theMladyPan) toto prerobiť na relatívne cesty
     /home/stanke/xerxes-node/venv/bin/python /home/stanke/xerxes-node/xerxes-worker&PID=$!
+    echo "xerxes-worker started with PID $PID"
 }
 
 stop() {
     # code to stop app comes here 
     # example: killproc program_name
     # TODO (@theMladyPan) toto lepšie spraviť
-    echo killing worker $PID
-    kill $PID
+    echo "killing xerxes-worker"
+    ps ax|grep xerxes-worker|grep -v grep|cut -d"/" -f1|cut -d"p" -f1|xargs kill
     # killall xerxes-worker
 }
 
