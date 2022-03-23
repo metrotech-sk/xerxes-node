@@ -12,6 +12,8 @@ update_period = 60
 use_device = "/dev/ttyS0"
 used_medium = Medium.propyleneglycol
 
+sensor_timeout=0.005
+
 reference_leaf_addr = 0x1f
 leaves = {
     0x01                : "nivelation",

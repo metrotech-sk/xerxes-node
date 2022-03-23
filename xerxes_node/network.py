@@ -54,6 +54,9 @@ class XerxesNetwork:
            raise NetworkBusy("Previous command is still in progress")
         poller = Thread(target = self._poll)
         poller.start()
+
+    def busy(self):
+        return self._access_lock.locked()
         
     def wait(self, timeout=-1):
         locked = self._access_lock.acquire(timeout=timeout)
