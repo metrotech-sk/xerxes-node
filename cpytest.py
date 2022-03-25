@@ -5,7 +5,7 @@ import cppyy, os, sys
 from xerxes_node import config
 from xerxes_node.network import XerxesNetwork
 from xerxes_node.parser import Parser
-from xerxes_node.leaves.pleaf import PLeaf, PLeafData
+from xerxes_node.hierarchy.pleaf import PLeaf, PLeafData
 
 
 file_path = os.path.realpath(__file__)

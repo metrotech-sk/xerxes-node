@@ -2,31 +2,43 @@
 # -*- coding: utf-8 -*-
 
 
+from enum import Enum
 import logging
-from pprint import pprint
 from subprocess import TimeoutExpired
 from threading import Lock
 from threading import Thread
+from typing import List
+from xerxes_node.hierarchy.leaf import ChecksumError, LengthError
 
-from xerxes_node.leaves.pleaf import PLeaf
+from xerxes_node.hierarchy.pleaf import PLeaf
 
 
 class NetworkBusy(Exception):
     pass
 
 
+class Duplex(Enum):
+    HALF = 1
+    FULL = 0
+
+
 class XerxesNetwork:
-    def __init__(self, leaves: list, exclusive_communication=True, std_timeout_s=-1):
+    def __init__(self, leaves: list, mode: Duplex, std_timeout_s=-1):
         self._leaves = leaves
-        self._exclusive_communication = exclusive_communication
+        self._mode = mode
         self._access_lock = Lock()
         self._std_timeout_s = std_timeout_s
         self._readings = []
         self.log = logging.getLogger(__name__)
+        
+    def append_leaves(self, leaves: List) -> None:
+        assert(isinstance(leaves, list))
+        
+        self._leaves.append(leaves)
 
     def _poll(self):
-        # if network is read/write exclusive:
-        if self._exclusive_communication:
+        # if network is read/write exclusive:
+        if self._mode == Duplex.HALF:
             lock_acq = self._access_lock.acquire(blocking=True, timeout=self._std_timeout_s)
             if not lock_acq:
                 self.log.warning("trying to access busy network")
@@ -38,24 +50,26 @@ class XerxesNetwork:
             try:
                 leaf_reading = leaf.read()
                 network_snap[leaf.address] = leaf_reading
-            except IOError:
-                self.log.warning(f"message from leaf {leaf.address} is corrupted")
+            except LengthError:
+                self.log.warning(f"message from leaf {leaf.address} has invalid length")
+            except ChecksumError:
+                self.log.warning(f"message from leaf {leaf.address} has invalid checksum")
             except TimeoutError:
                 self.log.warning(f"Leaf {leaf.address} is not responding.")
         
         self._readings.append(network_snap)
 
         # release access lock
-        if self._exclusive_communication:
+        if self._mode == Duplex.HALF:
             self._access_lock.release()
 
-    def poll(self):
-        if self._access_lock.locked() and self._exclusive_communication:
+    def poll(self) -> None:
+        if self._access_lock.locked() and self._mode == Duplex.HALF:
            raise NetworkBusy("Previous command is still in progress")
         poller = Thread(target = self._poll)
         poller.start()
 
-    def busy(self):
+    def busy(self) -> bool:
         return self._access_lock.locked()
         
     def wait(self, timeout=-1):
@@ -63,7 +77,7 @@ class XerxesNetwork:
         self._access_lock.release()
         return locked
 
-    def get(self):
+    def get(self) -> List:
         # reset counter
         readings = list(self._readings)
         self._readings = []

@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass, is_dataclass
-from typing import List
-from xerxes_node.medium import Medium
+from typing import Callable, List
 from xerxes_node.units.nivelation import Nivelation
-from xerxes_node.leaves.leaf_template import Leaf
+from xerxes_node.hierarchy.leaf import Leaf
 from xerxes_node.units.temp import Temperature
 import struct
 
@@ -28,10 +27,24 @@ class AveragePLeafData:
 
 
 class PLeaf(Leaf):
-    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Medium = Medium.water):
+    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Callable):
         super().__init__(channel, my_addr, std_timeout)
 
         self.conv_func = medium
+        
+    @staticmethod
+    def from_list(channel, addresses: List, std_timeout: float, medium: Callable) -> List:
+        pleaves = []
+        for addr in addresses:
+            pleaves.append(
+                PLeaf(
+                    channel=channel,
+                    my_addr=addr,
+                    std_timeout=std_timeout,
+                    medium=medium
+                    )
+            )
+        return pleaves
         
     def read(self) -> list:
         reply = self.exchange([0])

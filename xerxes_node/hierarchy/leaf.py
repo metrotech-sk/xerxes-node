@@ -9,6 +9,13 @@ cppyy.add_include_path(os.path.join(script_dir, "../../lib/include"))
 cppyy.include("exceptions.h")
 from cppyy.gbl import Xerxes as X
 
+class LengthError(Exception):
+    pass
+
+
+class ChecksumError(Exception):
+    pass
+
 
 class Leaf:
     def __init__(self, channel, address: int, std_timeout: float):
@@ -29,9 +36,9 @@ class Leaf:
         except X.TimeoutExpired:
             raise TimeoutError("Timeout expired")
         except X.InvalidMessageLength:
-            raise IOError("Invalid message received (length)")
+            raise LengthError("Invalid message received (length)")
         except X.InvalidMessageChecksum:
-            raise IOError("Invalid message received (checksum)")
+            raise ChecksumError("Invalid message received (checksum)")
 
     def exchange(self, payload: list) -> None:
         # test if payload is list of uchars
@@ -45,9 +52,9 @@ class Leaf:
         except X.TimeoutExpired:
             raise TimeoutError("Timeout expired")
         except X.InvalidMessageLength:
-            raise IOError("Invalid message received (length)")
+            raise LengthError("Invalid message received (length)")
         except X.InvalidMessageChecksum:
-            raise IOError("Invalid message received (checksum)")
+            raise ChecksumError("Invalid message received (checksum)")
     
     def read(self):
         raise NotImplementedError
