@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from xerxes_node.hierarchy.nivelation_branch import NivelationBranch
+from xerxes_node.hierarchy.branches.nivelation_branch import NivelationBranch
 from xerxes_node.medium import Medium
 
 

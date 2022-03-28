@@ -4,14 +4,13 @@
 from dataclasses import dataclass, is_dataclass
 from typing import Callable, List
 from xerxes_node.units.nivelation import Nivelation
-from xerxes_node.hierarchy.leaf import Leaf
+from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData
 from xerxes_node.units.temp import Temperature
 import struct
 
 
 @dataclass
-class PLeafData:
-    addr: int
+class PLeafData(LeafData):
     nivelation: Nivelation
     temperature_sensor: Temperature
     temperature_external_1: Temperature
@@ -46,7 +45,7 @@ class PLeaf(Leaf):
             )
         return pleaves
         
-    def read(self) -> list:
+    def read(self) -> PLeafData :
         reply = self.exchange([0])
         reply = bytes([ord(i) for i in reply.payload])
 
@@ -62,8 +61,8 @@ class PLeaf(Leaf):
             temperature_external_2=Temperature.from_milli_kelvin(values[3])
         )
         
-        return result
-
+        self._readings.append(result)
+            
     
     @staticmethod
     def average(readings: List[PLeafData]):

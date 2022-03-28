@@ -4,7 +4,7 @@
 
 import logging
 import os
-from xerxes_node.hierarchy.leaf import Leaf
+from xerxes_node.hierarchy.leaves.leaf import Leaf
 
 
 def discover(comm, leaves, addr_range=32):

@@ -4,7 +4,7 @@
 
 from pprint import pprint
 from typing import Dict, List
-from xerxes_node.hierarchy.pleaf import AveragePLeafData, PLeaf
+from xerxes_node.hierarchy.leaves.pleaf import AveragePLeafData, PLeaf
 
 
 class Parser:
