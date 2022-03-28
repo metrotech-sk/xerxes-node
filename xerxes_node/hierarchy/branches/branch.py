@@ -13,6 +13,14 @@ class Branch:
         self._name = name
         self.readings = {}
         
+    @property
+    def name(self):
+        return str(self._name)
+    
+    @name.setter
+    def name(self, val):
+        raise NotImplementedError
+        
     def __iter__(self):
         self._lv_it = 0
         return self

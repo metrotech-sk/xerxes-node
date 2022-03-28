@@ -7,7 +7,7 @@ from typing import Dict, List
 from xerxes_node.hierarchy.leaves.pleaf import AveragePLeafData, PLeaf
 
 
-class Parser:
+class NivelationParser:
     @staticmethod
     def to_dict(averages: Dict, reference_addr: int):
         to_return = dict()

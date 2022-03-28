@@ -8,10 +8,11 @@ from xerxes_node.medium import Medium
 logging_level = 'DEBUG' # DEBUG INFO WARNING ERROR
 mongo_URI = "mongodb+srv://node:prokopcakovamama@xerxes.57jmr.mongodb.net/alfa?retryWrites=true&w=majority"
 use_database = "test"
-sample_period = 1
-update_period = 60
-network_timeout = 0.5
-use_device = "/dev/ttyUSB0"
+sample_period = 1  # how often read sensors, [s]
+network_timeout = 0.5  # read until, [s]
+update_period = 10  # how often to push to DB, [s]
+use_device = "/dev/ttyS0"  # device used for communication
+used_medium = Medium.propyleneglycol  # used medium in pressure bus
 
 
 branches = {
@@ -24,16 +25,7 @@ branches = {
             0x03                : "nivelation",
         },
         "medium" : Medium.propyleneglycol,
-        "sensor_timeout" : 0.005
+        "sensor_timeout" : 0.005,
+        "lpf_const": 10  # min
     }
-}       
-
-
-# toto pojde prec
-reference_leaf_addr = 0x1f
-leaves = {
-        0x01                : "nivelation",
-        0x02                : "nivelation",
-        0x03                : "nivelation",
-        0x1f                : "nivelation"  # also reference
-    }
+}

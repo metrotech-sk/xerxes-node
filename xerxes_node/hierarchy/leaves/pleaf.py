@@ -4,7 +4,7 @@
 from dataclasses import dataclass, is_dataclass
 from typing import Callable, List
 from xerxes_node.units.nivelation import Nivelation
-from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData
+from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData, LengthError
 from xerxes_node.units.temp import Temperature
 import struct
 
@@ -71,7 +71,7 @@ class PLeaf(Leaf):
         valid = 0
 
         if arrlen<1:
-            raise ValueError("Unable to calculate average from empty list")
+            raise LengthError("Unable to calculate average from empty list")
         
         n, ts, t1, t2 = [], [], [], []
         for r in readings:
@@ -89,11 +89,11 @@ class PLeaf(Leaf):
             raise ValueError("No valid data received")
 
         return AveragePLeafData(
-            Nivelation(sum(n)/valid, conv_func=n[0]._conversion),
-            Temperature(sum(ts)/valid),
-            Temperature(sum(t1)/valid),
-            Temperature(sum(t2)/valid),
-            invalid
+            nivelation=Nivelation(sum(n)/valid, conv_func=n[0]._conversion),
+            temperature_sensor=Temperature(sum(ts)/valid),
+            temperature_external_1=Temperature(sum(t1)/valid),
+            temperature_external_2=Temperature(sum(t2)/valid),
+            invalid=invalid
         )
         
 
