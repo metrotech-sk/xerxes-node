@@ -1,13 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import cppyy, os
+import os
+from dataclasses import dataclass
+from typing import List
+
+import cppyy
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
-cppyy.add_include_path(os.path.join(script_dir, "../../lib/include"))
+cppyy.add_include_path(os.path.join(script_dir, "../../../lib/include"))
 cppyy.include("exceptions.h")
 from cppyy.gbl import Xerxes as X
+
+
+class LengthError(Exception):
+    pass
+
+
+class ChecksumError(Exception):
+    pass
+
+
+@dataclass
+class LeafData(object):
+    addr: int
 
 
 class Leaf:
@@ -22,6 +39,8 @@ class Leaf:
         assert(std_timeout >= 0)
         self.std_timeout = std_timeout
 
+        self._readings = []
+
     def ping(self):
         self.channel.ping(self._address)
         try:
@@ -29,14 +48,14 @@ class Leaf:
         except X.TimeoutExpired:
             raise TimeoutError("Timeout expired")
         except X.InvalidMessageLength:
-            raise IOError("Invalid message received (length)")
+            raise LengthError("Invalid message received (length)")
         except X.InvalidMessageChecksum:
-            raise IOError("Invalid message received (checksum)")
+            raise ChecksumError("Invalid message received (checksum)")
 
     def exchange(self, payload: list) -> None:
         # test if payload is list of uchars
-        assert(all([i<=255 for i in payload]))
-        assert(all([i>=0 for i in payload]))
+        assert(all([i <= 255 for i in payload]))
+        assert(all([i >= 0 for i in payload]))
         assert(all([isinstance(i, int) for i in payload]))
 
         self.channel.send(self._address, payload)
@@ -45,10 +64,10 @@ class Leaf:
         except X.TimeoutExpired:
             raise TimeoutError("Timeout expired")
         except X.InvalidMessageLength:
-            raise IOError("Invalid message received (length)")
+            raise LengthError("Invalid message received (length)")
         except X.InvalidMessageChecksum:
-            raise IOError("Invalid message received (checksum)")
-    
+            raise ChecksumError("Invalid message received (checksum)")
+
     def read(self):
         raise NotImplementedError
 
@@ -68,3 +87,11 @@ class Leaf:
 
     def __repr__(self) -> str:
         return f"Leaf(channel={self.channel}, address={self._address}, std_timeout={self.std_timeout})"
+
+    def pop(self) -> LeafData:
+        return self._readings.pop()
+
+    def pop_all(self) -> List[LeafData]:
+        readings = list(self._readings)
+        self._readings = list()
+        return readings
