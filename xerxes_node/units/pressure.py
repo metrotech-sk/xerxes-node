@@ -24,5 +24,5 @@ class Pressure(Unit):
         return f"Pressure({self.value})"
 
     @property
-    def preffered(self):
+    def preferred(self):
         return self.Pascal

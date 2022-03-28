@@ -103,11 +103,11 @@ class PLeaf(Leaf):
             return None
 
         to_return = {
-            "nivelation_raw": readings.nivelation.preffered,
-            "nivelation": readings.nivelation.preffered - offset,
-            "temp_sens": readings.temperature_sensor.preffered,
-            "temp_ext1": readings.temperature_external_1.preffered,
-            "temp_ext2": readings.temperature_external_2.preffered,
+            "nivelation_raw": readings.nivelation.preferred,
+            "nivelation": readings.nivelation.preferred - offset,
+            "temp_sens": readings.temperature_sensor.preferred,
+            "temp_ext1": readings.temperature_external_1.preferred,
+            "temp_ext2": readings.temperature_external_2.preferred,
             "errors": readings.invalid
         }
 

@@ -21,5 +21,5 @@ class Angle(Unit):
         return f"Angle({self.value})"
 
     @property
-    def preffered(self):
+    def preferred(self):
         return self.rad

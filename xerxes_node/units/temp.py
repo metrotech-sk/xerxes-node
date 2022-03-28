@@ -24,5 +24,5 @@ class Temperature(Unit):
         return f"Temperature({self._value})"
     
     @property
-    def preffered(self):
+    def preferred(self):
         return self.Celsius

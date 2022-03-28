@@ -14,5 +14,5 @@ class Nivelation(Pressure):
         return converted
 
     @property
-    def preffered(self):
+    def preferred(self):
         return self.mm

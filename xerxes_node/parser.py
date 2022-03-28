@@ -12,6 +12,6 @@ class NivelationParser:
     def to_dict(averages: Dict, reference_addr: int):
         to_return = dict()
         for key in averages:
-            to_return[hex(key)] = PLeaf.to_dict(averages[key], offset=averages[reference_addr].nivelation.preffered)
+            to_return[hex(key)] = PLeaf.to_dict(averages[key], offset=averages[reference_addr].nivelation.preferred)
 
         return to_return
