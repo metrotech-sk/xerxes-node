@@ -26,24 +26,10 @@ class AveragePLeafData:
 
 
 class PLeaf(Leaf):
-    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Callable):
+    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Callable, reference=0):
         super().__init__(channel, my_addr, std_timeout)
 
         self.conv_func = medium
-        
-    @staticmethod
-    def from_list(channel, addresses: List, std_timeout: float, medium: Callable) -> List:
-        pleaves = []
-        for addr in addresses:
-            pleaves.append(
-                PLeaf(
-                    channel=channel,
-                    my_addr=addr,
-                    std_timeout=std_timeout,
-                    medium=medium
-                    )
-            )
-        return pleaves
         
     def read(self) -> PLeafData :
         reply = self.exchange([0])
@@ -65,7 +51,7 @@ class PLeaf(Leaf):
             
     
     @staticmethod
-    def average(readings: List[PLeafData]):
+    def average(readings: List[PLeafData]) -> AveragePLeafData:
         arrlen = len(readings)
         invalid = 0
         valid = 0
@@ -113,3 +99,16 @@ class PLeaf(Leaf):
 
         return to_return
         
+        
+def pleaves_from_list(channel, addresses: List, std_timeout: float, medium: Callable) -> List[PLeaf]:
+    pleaves = []
+    for addr in addresses:
+        pleaves.append(
+            PLeaf(
+                channel=channel,
+                my_addr=addr,
+                std_timeout=std_timeout,
+                medium=medium
+                )
+        )
+    return pleaves
