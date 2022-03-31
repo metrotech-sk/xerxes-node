@@ -2,17 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass, is_dataclass
-from typing import List
-from xerxes_node.medium import Medium
+from typing import Callable, List
 from xerxes_node.units.nivelation import Nivelation
-from xerxes_node.leaves.leaf_template import Leaf
+from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData, LengthError
 from xerxes_node.units.temp import Temperature
 import struct
 
 
 @dataclass
-class PLeafData:
-    addr: int
+class PLeafData(LeafData):
     nivelation: Nivelation
     temperature_sensor: Temperature
     temperature_external_1: Temperature
@@ -28,12 +26,12 @@ class AveragePLeafData:
 
 
 class PLeaf(Leaf):
-    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Medium = Medium.water):
+    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Callable, reference=0):
         super().__init__(channel, my_addr, std_timeout)
 
         self.conv_func = medium
         
-    def read(self) -> list:
+    def read(self) -> PLeafData :
         reply = self.exchange([0])
         reply = bytes([ord(i) for i in reply.payload])
 
@@ -49,17 +47,17 @@ class PLeaf(Leaf):
             temperature_external_2=Temperature.from_milli_kelvin(values[3])
         )
         
-        return result
-
+        self._readings.append(result)
+            
     
     @staticmethod
-    def average(readings: List[PLeafData]):
+    def average(readings: List[PLeafData]) -> AveragePLeafData:
         arrlen = len(readings)
         invalid = 0
         valid = 0
 
         if arrlen<1:
-            raise ValueError("Unable to calculate average from empty list")
+            raise LengthError("Unable to calculate average from empty list")
         
         n, ts, t1, t2 = [], [], [], []
         for r in readings:
@@ -77,11 +75,11 @@ class PLeaf(Leaf):
             raise ValueError("No valid data received")
 
         return AveragePLeafData(
-            Nivelation(sum(n)/valid, conv_func=n[0]._conversion),
-            Temperature(sum(ts)/valid),
-            Temperature(sum(t1)/valid),
-            Temperature(sum(t2)/valid),
-            invalid
+            nivelation=Nivelation(sum(n)/valid, conv_func=n[0]._conversion),
+            temperature_sensor=Temperature(sum(ts)/valid),
+            temperature_external_1=Temperature(sum(t1)/valid),
+            temperature_external_2=Temperature(sum(t2)/valid),
+            invalid=invalid
         )
         
 
@@ -91,13 +89,26 @@ class PLeaf(Leaf):
             return None
 
         to_return = {
-            "nivelation_raw": readings.nivelation.preffered,
-            "nivelation": readings.nivelation.preffered - offset,
-            "temp_sens": readings.temperature_sensor.preffered,
-            "temp_ext1": readings.temperature_external_1.preffered,
-            "temp_ext2": readings.temperature_external_2.preffered,
+            "nivelation_raw": readings.nivelation.preferred,
+            "nivelation": readings.nivelation.preferred - offset,
+            "temp_sens": readings.temperature_sensor.preferred,
+            "temp_ext1": readings.temperature_external_1.preferred,
+            "temp_ext2": readings.temperature_external_2.preferred,
             "errors": readings.invalid
         }
 
         return to_return
         
+        
+def pleaves_from_list(channel, addresses: List, std_timeout: float, medium: Callable) -> List[PLeaf]:
+    pleaves = []
+    for addr in addresses:
+        pleaves.append(
+            PLeaf(
+                channel=channel,
+                my_addr=addr,
+                std_timeout=std_timeout,
+                medium=medium
+                )
+        )
+    return pleaves

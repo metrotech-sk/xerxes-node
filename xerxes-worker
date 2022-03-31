@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
 from pprint import pprint as print
 import os
 import time
@@ -8,13 +9,13 @@ import socket
 import logging
 import sys
 from pymongo import MongoClient
-from statistics import stdev
+from pymongo.collection import Collection
 from systemd import journal
-from xerxes_node.leaves.pleaf import PLeaf, Medium
-from xerxes_node.leaves.pleaf import Medium
-from xerxes_node.network import XerxesNetwork
+from xerxes_node.hierarchy.branches.nivelation_branch import NivelationBranch
+from xerxes_node.hierarchy.leaves.pleaf import PLeaf, pleaves_from_list
+from xerxes_node.network import Duplex, XerxesNetwork
 import xerxes_node.config as config
-from xerxes_node.parser import Parser
+from xerxes_node.parser import NivelationParser
 from xerxes_node.utils import get_cpu_temp_celsius
 
 
@@ -37,24 +38,24 @@ def home_dir(path):
 
 
 
-def run(db, leaves, sample_period=1, log_period=60):
-    collection = db[HOSTNAME]
+def run(collection: Collection, network: XerxesNetwork, sample_period: int, log_period: int):
 
     current_period = log_period
     last_cycle = time.time()
 
-    network = XerxesNetwork(leaves, std_timeout_s=0.2)
-
     while True:
-        while network.busy():
-            pass
+        # wait until network is ready
+        network.wait()
+
+        # poll for data from sensors
         network.poll()
 
+        # calculate cycletime and delays
         cycletime = time.time() - last_cycle
-        try:
+        if sample_period-cycletime > 0:
             time.sleep(sample_period-cycletime)
-        except ValueError:
-            log.warning(f"Cycle time {cycletime} is longer than sample period {sample_period}")
+        else:
+            log.warning(f"Cycle time: {cycletime}, is longer than desired sample period: {sample_period}.")
 
         last_cycle = time.time()
         current_period += sample_period
@@ -62,23 +63,27 @@ def run(db, leaves, sample_period=1, log_period=60):
         if current_period >= log_period:
             current_period = 0
             
-            averages = network.average()
-            if isinstance(averages[config.reference_leaf_addr], type(None)):
-                sensor_data = {}
-            else:
-                sensor_data = Parser.to_dict(averages, config.reference_leaf_addr)
+            data = dict()
+            network.wait()
 
-            data = {
-                "measurement": sensor_data,
-                "info": {
-                    "units": "mm, °C",
-                    "cpu_temp": get_cpu_temp_celsius()
-                },           
-                "time":{
-                    "epoch": time.time(),
-                    "gm_time": time.asctime(time.gmtime()),
-                }     
-            }
+            for branch in network.branches:
+                data[branch.name] = NivelationParser.to_dict(
+                    averages=branch.read(),
+                    reference_value=branch.column_height
+                )
+
+            data.update(
+                {
+                    "info": {
+                        "units": "mm, °C",
+                        "cpu_temp": get_cpu_temp_celsius()
+                    },           
+                    "time":{
+                        "epoch": time.time(),
+                        "gm_time": time.asctime(time.gmtime()),
+                    }     
+                }
+            )
 
             new_id = collection.insert_one(data)
             log.info(f"New log pushed: {new_id.inserted_id}")
@@ -113,13 +118,44 @@ if __name__ == "__main__":
     comm = X.Protocol(rs485, 0x00)
     
     # load sensor list from config
-    leaves = []
-    for key in config.leaves.keys():
-        if config.leaves.get(key) == "nivelation":
-            leaves.append(PLeaf(comm, key, std_timeout=config.sensor_timeout, medium=config.used_medium))
+    branches = []
+    
+    for branch_name in config.branches:
+        # parse branches from config according to their type
+        branch = config.branches[branch_name]
+        if branch["type"] == NivelationBranch:
+            ref_leaf = PLeaf(
+                channel=comm,
+                medium=branch["medium"],
+                my_addr=branch["reference_leaf"],
+                std_timeout=branch["sensor_timeout"]
+            
+            )
+            pleaves = pleaves_from_list(
+                channel=comm, 
+                addresses=branch["leaves"],
+                std_timeout=branch["sensor_timeout"],
+                medium=branch["medium"]
+                )
+            
+            branches.append(
+                NivelationBranch(
+                    leaves=pleaves,
+                    name=branch_name,
+                    reference_leaf=ref_leaf,
+                    column_avg_samples=branch["column_avg_samples"]
+                )
+            )
+        
+    x_network = XerxesNetwork(
+        branches=branches, 
+        mode=Duplex.HALF, 
+        std_timeout_s=config.network_timeout
+        )
 
     shard = MongoClient(config.mongo_URI)
     database = shard.get_database(config.use_database)
+    collection = database[HOSTNAME]
     log.info(f"Database {database.name} connected")
 
     log.info(f"Using collection: {database.name}.{HOSTNAME}")
@@ -127,8 +163,9 @@ if __name__ == "__main__":
   
 
     run(
-        db=database, 
-        leaves=leaves, 
+        collection=collection,
+        network=x_network,
         sample_period=config.sample_period, 
         log_period=config.update_period
     )
+
