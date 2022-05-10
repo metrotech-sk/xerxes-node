@@ -152,13 +152,16 @@ class XerxesNetwork:
         )
 
 
-    def send_msg(self, destination: bytes, payload: bytes) -> None:    
+    def send_msg(self, destination: Addr, payload: bytes) -> None:    
+        if not isinstance(destination, Addr):
+            destination = Addr(destination)
+            
         SOH = b"\x01"
 
         msg = SOH  # SOH
         msg += (len(payload) + 5).to_bytes(1, "big")  # LEN
         msg += self._addr.bytes
-        msg += destination #  DST
+        msg += destination.bytes #  DST
         msg += payload
         msg += checksum(msg)
         self._s.write(msg)

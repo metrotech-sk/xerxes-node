@@ -2,12 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import os
+import time
 from xerxes_node.ids import MsgId
 
 from xerxes_node.network import Addr, XerxesNetwork
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
+
+
+class NetworkError(Exception): ...
 
 
 class Leaf:
@@ -32,40 +36,31 @@ class Leaf:
 
 
     def ping(self):
-        try:
-            self.channel.send_msg(
-                destination=self._address.to_bytes(),
-                payload=MsgId.PING.to_bytes()
-            )
-            reply = self.channel.read_msg()
-            return reply.message_id == MsgId.PING_REPLY and reply.destination == self.channel.addr
-        except TimeoutError:
-            return False
-        except IOError:
-            return False
+        start = time.monotonic()
 
-
-    def exchange(self, payload: list) -> None:
-        # test if payload is list of uchars
-        if isinstance(payload, bytes):
-            payload = [b for b in payload]
+        self.channel.send_msg(
+            destination=self._address.to_bytes(),
+            payload=MsgId.PING.to_bytes()
+        )
+        reply = self.channel.read_msg()
+        if reply.message_id == MsgId.PING_REPLY and reply.destination == self.channel.addr:
+            return time.monotonic() - start
+        elif reply.message_id != MsgId.PING_REPLY:
+            NetworkError("Invalid reply received ({reply.message_id})")
         else:
-            assert(all([isinstance(i, int) for i in payload]))
-            assert(all([i<=255 for i in payload]))
-            assert(all([i>=0 for i in payload]))
+            NetworkError("Invalid destination address received ({reply.destination})")
 
-        self.channel.send(self._address, payload)
-        try:
-            return self.channel.receive(self.std_timeout)
-        except X.TimeoutExpired:
-            raise TimeoutError("Timeout expired")
-        except X.InvalidMessageLength:
-            raise IOError("Invalid message received (length)")
-        except X.InvalidMessageChecksum:
-            raise IOError("Invalid message received (checksum)")
+
+    def exchange(self, payload: bytes) -> None:
+        # test if payload is list of uchars
+        assert isinstance(payload, bytes)
+        self.channel.send_msg(self._address, payload)
+        return self.channel.read_msg()
+        
     
     def read(self):
-        raise NotImplementedError
+        return self.exchange(MsgId.FETCH_MEASUREMENT.bytes)
+        
 
     @property
     def address(self):

@@ -7,8 +7,8 @@ import time
 import serial, struct
 
 from xerxes_node.ids import DevId, Id, MsgId
-from xerxes_node.leaves.leaf_template import Leaf
-from xerxes_node.network import Addr, XerxesNetwork
+from xerxes_node.leaves.leaf_template import Leaf, NetworkError
+from xerxes_node.network import Addr, NetworkBusy, XerxesNetwork
 from xerxes_node import config
 
 
@@ -127,13 +127,16 @@ if __name__ == "__main__":
         except TimeoutError:
             print(addr, "timeouted")
         
+        except NetworkError:
+            print(addr, "sent wrong reply")
+        
 
     while 1:
         start = time.time()
         for leaf in leaves:
             try:
                 reading = leaf.read()
-                print(f"{leaf.addr} replied with: {reading[0]}, msgid: {reading[1]}.")
+                print(f"{leaf.addr} replied with: {reading}.")
             except TimeoutError:
                 print(f"{leaf.addr} timeouted...")
             except IOError:
