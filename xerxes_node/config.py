@@ -6,7 +6,7 @@ from xerxes_node.medium import Medium
 
 logging_level = 'DEBUG' # DEBUG INFO WARNING ERROR
 mongo_URI = "mongodb+srv://node:prokopcakovamama@xerxes.57jmr.mongodb.net/alfa?retryWrites=true&w=majority"
-use_database = "stojan"
+use_database = "pri_sajbach_v1.2"
 sample_period = 1
 update_period = 60
 use_device = "/dev/ttyS0"

@@ -2,89 +2,163 @@
 # -*- coding: utf-8 -*-
 
 
-import logging
-from pprint import pprint
-from subprocess import TimeoutExpired
-from threading import Lock
-from threading import Thread
+from dataclasses import dataclass
+import struct
+from typing import Union
+import serial
+from xerxes_node.ids import MsgId
 
-from xerxes_node.leaves.pleaf import PLeaf
+
+def checksum(message: bytes) -> bytes:
+    summary = sum(message)
+    summary ^= 0xFF  # get complement of summary
+    summary += 1  # get 2's complement
+    summary %= 0x100  # get last 8 bits of summary
+    return summary.to_bytes(1, "big")
+
+
+class Addr:
+    def __init__(self, addr: Union[int, bytes]) -> None:
+        if isinstance(addr, bytes):
+            addr = int(addr.hex(), 16)
+
+        assert isinstance(addr, int), f"address must be of type bytes|int, got {type(addr)} instead."
+        assert addr >= 0, "address must be positive"
+        assert addr < 256, "address must be not higher than 255"
+
+        self._addr : int = addr         
+
+
+    def to_bytes(self):
+        return self._addr.to_bytes(1, "big")
+
+    
+    @property
+    def bytes(self):
+        return self.to_bytes()
+
+    
+    def __repr__(self):
+        return f"Addr(0x{self.to_bytes().hex()})"
+
+    
+    def __eq__(self, __o: object) -> bool:
+        assert isinstance(__o, Addr), f"Invalid object type received, expected {type(Addr(1))}, got {type(__o)} instead."
+        return self._addr == __o._addr
 
 
 class NetworkBusy(Exception):
     pass
 
 
+@dataclass
+class XerxesMessage:
+    source: Addr
+    destination: Addr
+    length: int
+    message_id: MsgId
+    payload: bytes
+    crc: int = 0
+
+
 class XerxesNetwork:
-    def __init__(self, leaves: list, exclusive_communication=True, std_timeout_s=-1):
-        self._leaves = leaves
-        self._exclusive_communication = exclusive_communication
-        self._access_lock = Lock()
-        self._std_timeout_s = std_timeout_s
-        self._readings = []
-        self.log = logging.getLogger(__name__)
+    def __init__(self, port: str, baudrate: int, timeout: float, my_addr: Union[Addr, int, bytes]) -> None:
+        self._s = serial.Serial()
+        self._s.port = port
+        self._s.baudrate = baudrate
+        self._s.timeout = timeout
 
-    def _poll(self):
-        # if network is read/write exclusive:
-        if self._exclusive_communication:
-            lock_acq = self._access_lock.acquire(blocking=True, timeout=self._std_timeout_s)
-            if not lock_acq:
-                self.log.warning("trying to access busy network")
-                raise TimeoutExpired("unable to access network within timeout")
+        if isinstance(my_addr, int):
+            self._addr = Addr(my_addr)
+        elif isinstance(my_addr, bytes):
+            self._addr = int(my_addr.hex(), 16)
+        elif isinstance(my_addr, Addr):
+            self._addr = my_addr
+        else:
+            raise TypeError(f"my_addr type wrong, expected Union[Addr, int, bytes], got {type(my_addr)} instead")
 
-        network_snap = {}
-        for i in range(len(self._leaves)):
-            leaf = self._leaves[i]
-            try:
-                leaf_reading = leaf.read()
-                network_snap[leaf.address] = leaf_reading
-            except IOError:
-                self.log.warning(f"message from leaf {leaf.address} is corrupted")
-            except TimeoutError:
-                self.log.warning(f"Leaf {leaf.address} is not responding.")
         
-        self._readings.append(network_snap)
+        self._s.open()
 
-        # release access lock
-        if self._exclusive_communication:
-            self._access_lock.release()
 
-    def poll(self):
-        if self._access_lock.locked() and self._exclusive_communication:
-           raise NetworkBusy("Previous command is still in progress")
-        poller = Thread(target = self._poll)
-        poller.start()
+    def __repr__(self) -> str:
+        return f"XerxesNetwork(port={self._s.port}, baudrate={self._s.baudrate}, timeout={self._s.timeout}, my_addr={self._addr})"
 
-    def busy(self):
-        return self._access_lock.locked()
-        
-    def wait(self, timeout=-1):
-        locked = self._access_lock.acquire(timeout=timeout)
-        self._access_lock.release()
-        return locked
-
-    def get(self):
-        # reset counter
-        readings = list(self._readings)
-        self._readings = []
-        return readings
     
-    def average(self, flush=True):
-        "return the average of aggregated results"
-        averages = dict()
-        for leaf in self._leaves:
-            addr = leaf.address
-            leaf_vals = []
-            for reading in self._readings:
-                leaf_vals.append(reading.get(addr))
+    @property
+    def addr(self):
+        return self._addr
 
-            try:    
-                averages[addr] = PLeaf.average(leaf_vals)
-            except ValueError:
-                averages[addr] = None
+
+    @addr.setter
+    def addr(self, __v):
+        raise NotImplementedError
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._s.close()
+
+
+    def read_msg(self) -> XerxesMessage:
+        # wait for start of message
+        next_byte = self._s.read(1)
+        while next_byte != b"\x01":
+            next_byte = self._s.read(1)
+            if len(next_byte)==0:
+                raise TimeoutError("No message in queue")
+
+        checksum = 0x01
+        # read message length
+        msg_len = int(self._s.read(1).hex(), 16)
+        checksum += msg_len
+
+        #read source and destination address
+        src = self._s.read(1)
+        dst = self._s.read(1)
+
+        for i in [src, dst]:
+            checksum += int(i.hex(), 16) 
+
+        # read message ID
+        msg_id_raw = self._s.read(2)
+        if(len(msg_id_raw)!=2):
+            raise IOError("Invalid message id received")
+        for i in msg_id_raw:
+            checksum += i
+
+        msg_id = struct.unpack("!H", msg_id_raw)[0]
+
+        # read and unpack all data into array, assuming it is uint32_t, big-endian
+        raw_msg = bytes(0)
+        for i in range(int(msg_len -    7)):
+            next_byte = self._s.read(1)
+            raw_msg += next_byte
+            checksum += int(next_byte.hex(), 16)
         
-        if flush:
-            self._readings=[]
+        #read checksum
+        rcvd_chks = self._s.read(1)
+        checksum += int(rcvd_chks.hex(), 16)
+        checksum %= 0x100
+        if checksum:
+            raise IOError("Invalid checksum received")
 
-        return averages
+        return XerxesMessage(
+            source=Addr(src),
+            destination=Addr(dst),
+            length=msg_len,
+            message_id=MsgId(msg_id),
+            payload=raw_msg,
+            crc=checksum
+        )
 
+
+    def send_msg(self, destination: bytes, payload: bytes) -> None:    
+        SOH = b"\x01"
+
+        msg = SOH  # SOH
+        msg += (len(payload) + 5).to_bytes(1, "big")  # LEN
+        msg += self._addr.bytes
+        msg += destination #  DST
+        msg += payload
+        msg += checksum(msg)
+        self._s.write(msg)

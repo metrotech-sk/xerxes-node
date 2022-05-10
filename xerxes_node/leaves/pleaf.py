@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass, is_dataclass
+from pprint import pprint
 from typing import List
+from xerxes_node.ids import MsgId
 from xerxes_node.medium import Medium
 from xerxes_node.units.nivelation import Nivelation
 from xerxes_node.leaves.leaf_template import Leaf
@@ -34,19 +36,20 @@ class PLeaf(Leaf):
         self.conv_func = medium
         
     def read(self) -> list:
-        reply = self.exchange([0])
+        reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes(2, "big"))
         reply = bytes([ord(i) for i in reply.payload])
+        print(reply, len(reply))
 
         # unpack 4 uint32_t's
-        values = struct.unpack("!IIII", reply)
+        values = struct.unpack("!ffff", reply)  # unpack 4 floats: presure + 3x temp.
 
         # convert to sensible units
         result = PLeafData(
             addr=self.address,
-            nivelation=Nivelation(values[0]/1000, self.conv_func),  # pressure in 
-            temperature_sensor=Temperature.from_milli_kelvin(values[1]),
-            temperature_external_1=Temperature.from_milli_kelvin(values[2]),
-            temperature_external_2=Temperature.from_milli_kelvin(values[3])
+            nivelation=Nivelation(values[0], self.conv_func),  # pressure in 
+            temperature_sensor=Temperature(values[1]),
+            temperature_external_1=Temperature(values[2]),
+            temperature_external_2=Temperature(values[3])
         )
         
         return result

@@ -4,6 +4,9 @@
 from .unit import Unit
 
 class Temperature(Unit):
+    def __init__(self, celsius=0):
+        super().__init__(celsius + 273.15)
+
     @property
     def Celsius(self):
         return self.value - 273.15

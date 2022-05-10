@@ -10,7 +10,7 @@ import sys
 from pymongo import MongoClient
 from statistics import stdev
 from systemd import journal
-from xerxes_node.leaves.pleaf import PLeaf, Medium
+from xerxes_node.leaves.pleaf import PLeaf
 from xerxes_node.leaves.pleaf import Medium
 from xerxes_node.network import XerxesNetwork
 import xerxes_node.config as config
@@ -21,13 +21,7 @@ from xerxes_node.utils import get_cpu_temp_celsius
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
 
-
-import cppyy, os, time
-cppyy.add_include_path(os.path.join(script_dir, "lib/include"))
-[cppyy.include(i) for i in os.listdir(os.path.join(script_dir, "lib/include"))]
-cppyy.add_library_path(os.path.join(script_dir, "build"))
-cppyy.load_library("libxerxes")
-from cppyy.gbl import Xerxes as X
+import os, time
 
 
 HOSTNAME = socket.gethostname()
