@@ -14,15 +14,15 @@ class Pressure(Unit):
 
     @property
     def Pascal(self):
-        return self._value
+        return self.value
     
     @staticmethod
     def from_micro_bar(ubar):
         return Pressure(ubar/10)
 
     def __repr__(self):
-        return f"Pressure({self._value})"
+        return f"Pressure({self.value})"
 
     @property
-    def preffered(self):
+    def preferred(self):
         return self.Pascal

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from dataclasses import dataclass
 import os
 import time
+from typing import List
 from xerxes_node.ids import MsgId
 
 from xerxes_node.network import Addr, XerxesMessage, XerxesNetwork
@@ -12,6 +14,19 @@ script_dir = os.path.dirname(file_path)
 
 
 class NetworkError(Exception): ...
+
+
+class LengthError(Exception):
+    pass
+
+
+class ChecksumError(Exception):
+    pass
+
+
+@dataclass
+class LeafData(object):
+    addr: int
 
 
 class Leaf:
@@ -32,6 +47,8 @@ class Leaf:
     def addr(self, __v):
         raise NotImplementedError
 
+
+        self._readings = []
 
     def ping(self):
         start = time.perf_counter_ns()
@@ -75,3 +92,11 @@ class Leaf:
 
     def __repr__(self) -> str:
         return f"Leaf(channel={self.channel}, address={self._address})"
+
+    def pop(self) -> LeafData:
+        return self._readings.pop()
+
+    def pop_all(self) -> List[LeafData]:
+        readings = list(self._readings)
+        self._readings = list()
+        return readings

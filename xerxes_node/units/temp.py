@@ -48,4 +48,4 @@ class Kelvin(Temperature):
 
     @property
     def preffered(self):
-        return self.kelvin
+        return self.value

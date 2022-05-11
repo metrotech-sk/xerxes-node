@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
 from pprint import pprint as print
 import os
 import time
@@ -8,13 +9,13 @@ import socket
 import logging
 import sys
 from pymongo import MongoClient
-from statistics import stdev
+from pymongo.collection import Collection
 from systemd import journal
-from xerxes_node.leaves.pleaf import PLeaf
-from xerxes_node.leaves.pleaf import Medium
+from xerxes_node.hierarchy.leaves.pleaf import PLeaf
+from xerxes_node.hierarchy.leaves.pleaf import Medium
 from xerxes_node.network import Addr, XerxesNetwork
 import xerxes_node.config as config
-from xerxes_node.parser import Parser
+from xerxes_node.parser import NivelationParser, Parser
 from xerxes_node.system import XerxesSystem
 from xerxes_node.utils import get_cpu_temp_celsius
 
@@ -32,8 +33,7 @@ def home_dir(path):
 
 
 
-def run(db, leaves, sample_period=1, log_period=60):
-    collection = db[HOSTNAME]
+def run(collection: Collection, network: XerxesNetwork, sample_period: int, log_period: int):
 
     current_period = log_period
     last_cycle = time.time()
@@ -41,15 +41,18 @@ def run(db, leaves, sample_period=1, log_period=60):
     network = XerxesSystem(leaves, std_timeout_s=0.2)
 
     while True:
-        while network.busy():
-            pass
+        # wait until network is ready
+        network.wait()
+
+        # poll for data from sensors
         network.poll()
 
+        # calculate cycletime and delays
         cycletime = time.time() - last_cycle
-        try:
+        if sample_period-cycletime > 0:
             time.sleep(sample_period-cycletime)
-        except ValueError:
-            log.warning(f"Cycle time {cycletime} is longer than sample period {sample_period}")
+        else:
+            log.warning(f"Cycle time: {cycletime}, is longer than desired sample period: {sample_period}.")
 
         last_cycle = time.time()
         current_period += sample_period
@@ -57,23 +60,27 @@ def run(db, leaves, sample_period=1, log_period=60):
         if current_period >= log_period:
             current_period = 0
             
-            averages = network.average()
-            if isinstance(averages[config.reference_leaf_addr], type(None)):
-                sensor_data = {}
-            else:
-                sensor_data = Parser.to_dict(averages, config.reference_leaf_addr)
+            data = dict()
+            network.wait()
 
-            data = {
-                "measurement": sensor_data,
-                "info": {
-                    "units": "mm, °C",
-                    "cpu_temp": get_cpu_temp_celsius()
-                },           
-                "time":{
-                    "epoch": time.time(),
-                    "gm_time": time.asctime(time.gmtime()),
-                }     
-            }
+            for branch in network.branches:
+                data[branch.name] = NivelationParser.to_dict(
+                    averages=branch.read(),
+                    reference_value=branch.column_height
+                )
+
+            data.update(
+                {
+                    "info": {
+                        "units": "mm, °C",
+                        "cpu_temp": get_cpu_temp_celsius()
+                    },           
+                    "time":{
+                        "epoch": time.time(),
+                        "gm_time": time.asctime(time.gmtime()),
+                    }     
+                }
+            )
 
             new_id = collection.insert_one(data)
             log.info(f"New log pushed: {new_id.inserted_id}")
@@ -125,6 +132,7 @@ if __name__ == "__main__":
 
     shard = MongoClient(config.mongo_URI)
     database = shard.get_database(config.use_database)
+    collection = database[HOSTNAME]
     log.info(f"Database {database.name} connected")
 
     log.info(f"Using collection: {database.name}.{HOSTNAME}")
@@ -132,8 +140,9 @@ if __name__ == "__main__":
   
 
     run(
-        db=database, 
-        leaves=leaves, 
+        collection=collection,
+        network=x_network,
         sample_period=config.sample_period, 
         log_period=config.update_period
     )
+

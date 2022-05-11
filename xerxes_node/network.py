@@ -3,6 +3,7 @@
 
 
 from dataclasses import dataclass
+from enum import Enum
 import struct
 from typing import Union
 import serial
@@ -58,6 +59,11 @@ class XerxesMessage:
     message_id: MsgId
     payload: bytes
     crc: int = 0
+
+
+class Duplex(Enum):
+    HALF = 1
+    FULL = 0
 
 
 class XerxesNetwork:
