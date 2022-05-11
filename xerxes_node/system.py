@@ -7,6 +7,11 @@ from threading import Lock
 from threading import Thread
 from xerxes_node.leaves.pleaf import PLeaf
 
+
+class NetworkBusy(Exception):
+    pass
+
+
 class XerxesSystem:
     def __init__(self, leaves: list, exclusive_communication=True, std_timeout_s=-1):
         self._leaves = leaves
@@ -71,7 +76,7 @@ class XerxesSystem:
         "return the average of aggregated results"
         averages = dict()
         for leaf in self._leaves:
-            addr = leaf.address
+            addr = leaf.addr
             leaf_vals = []
             for reading in self._readings:
                 leaf_vals.append(reading.get(addr))

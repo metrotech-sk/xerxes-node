@@ -5,7 +5,7 @@ import os
 import time
 from xerxes_node.ids import MsgId
 
-from xerxes_node.network import Addr, XerxesNetwork
+from xerxes_node.network import Addr, XerxesMessage, XerxesNetwork
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
@@ -23,7 +23,6 @@ class Leaf:
         self.assign_channel(channel)
 
 
-
     @property
     def addr(self):
         return self._address
@@ -34,9 +33,8 @@ class Leaf:
         raise NotImplementedError
 
 
-
     def ping(self):
-        start = time.monotonic()
+        start = time.perf_counter_ns()
 
         self.channel.send_msg(
             destination=self._address.to_bytes(),
@@ -44,23 +42,23 @@ class Leaf:
         )
         reply = self.channel.read_msg()
         if reply.message_id == MsgId.PING_REPLY and reply.destination == self.channel.addr:
-            return time.monotonic() - start
+            return (time.perf_counter_ns() - start) /10**9
         elif reply.message_id != MsgId.PING_REPLY:
             NetworkError("Invalid reply received ({reply.message_id})")
         else:
             NetworkError("Invalid destination address received ({reply.destination})")
 
 
-    def exchange(self, payload: bytes) -> None:
+    def exchange(self, payload: bytes) -> XerxesMessage:
         # test if payload is list of uchars
         assert isinstance(payload, bytes)
         self.channel.send_msg(self._address, payload)
         return self.channel.read_msg()
         
     
-    def read(self):
+    def read(self) -> XerxesMessage:
         return self.exchange(MsgId.FETCH_MEASUREMENT.bytes)
-        
+
 
     @property
     def address(self):

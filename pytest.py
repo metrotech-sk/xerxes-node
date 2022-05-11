@@ -6,9 +6,10 @@ from statistics import mean, median, stdev
 import time
 import serial, struct
 
-from xerxes_node.ids import DevId, Id, MsgId
-from xerxes_node.leaves.leaf_template import Leaf, NetworkError
-from xerxes_node.network import Addr, NetworkBusy, XerxesNetwork
+from xerxes_node.ids import MsgId
+from xerxes_node.leaves.leaf_template import  NetworkError
+from xerxes_node.leaves.pleaf import PLeaf, PLeafData
+from xerxes_node.network import Addr, XerxesNetwork
 from xerxes_node import config
 
 
@@ -119,10 +120,14 @@ if __name__ == "__main__":
         addr = addresses.pop()
 
         try:
-            l = Leaf(XN, addr)
-            if l.ping():
-                leaves.append(l)
-                print(f"{l} found on network")
+            l = PLeaf(
+                channel=XN,
+                addr=addr,
+                medium=config.used_medium
+            )
+            ping = l.ping()
+            leaves.append(l)
+            print(f"Device {l.addr} found on network, ping: {ping*1000}ms")
             
         except TimeoutError:
             print(addr, "timeouted")
@@ -135,8 +140,8 @@ if __name__ == "__main__":
         start = time.time()
         for leaf in leaves:
             try:
-                reading = leaf.read()
-                print(f"{leaf.addr} replied with: {reading}.")
+                reading: PLeafData = leaf.read()
+                print(f"{leaf.addr} replied with: {reading.nivelation.mm}mm, {reading.temperature_sensor.preffered}°C.")
             except TimeoutError:
                 print(f"{leaf.addr} timeouted...")
             except IOError:

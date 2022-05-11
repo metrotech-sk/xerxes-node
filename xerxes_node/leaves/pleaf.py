@@ -6,9 +6,10 @@ from pprint import pprint
 from typing import List
 from xerxes_node.ids import MsgId
 from xerxes_node.medium import Medium
+from xerxes_node.network import Addr
 from xerxes_node.units.nivelation import Nivelation
 from xerxes_node.leaves.leaf_template import Leaf
-from xerxes_node.units.temp import Temperature
+from xerxes_node.units.temp import Celsius, Temperature
 import struct
 
 
@@ -16,40 +17,38 @@ import struct
 class PLeafData:
     addr: int
     nivelation: Nivelation
-    temperature_sensor: Temperature
-    temperature_external_1: Temperature
-    temperature_external_2: Temperature
+    temperature_sensor: Celsius
+    temperature_external_1: Celsius
+    temperature_external_2: Celsius
 
 @dataclass
 class AveragePLeafData:
     nivelation: Nivelation
-    temperature_sensor: Temperature
-    temperature_external_1: Temperature
-    temperature_external_2: Temperature
+    temperature_sensor: Celsius
+    temperature_external_1: Celsius
+    temperature_external_2: Celsius
     invalid: int
 
 
 class PLeaf(Leaf):
-    def __init__(self, channel, my_addr: int, std_timeout: float, *, medium: Medium = Medium.water):
-        super().__init__(channel, my_addr, std_timeout)
+    def __init__(self, channel, addr: Addr, *, medium: Medium = Medium.water):
+        super().__init__(channel, addr)
 
         self.conv_func = medium
         
-    def read(self) -> list:
-        reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes(2, "big"))
-        reply = bytes([ord(i) for i in reply.payload])
-        print(reply, len(reply))
+    def read(self) -> PLeafData:
+        reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes())
 
         # unpack 4 uint32_t's
-        values = struct.unpack("!ffff", reply)  # unpack 4 floats: presure + 3x temp.
+        values = struct.unpack("!ffff", reply.payload)  # unpack 4 floats: presure + 3x temp.
 
         # convert to sensible units
         result = PLeafData(
             addr=self.address,
             nivelation=Nivelation(values[0], self.conv_func),  # pressure in 
-            temperature_sensor=Temperature(values[1]),
-            temperature_external_1=Temperature(values[2]),
-            temperature_external_2=Temperature(values[3])
+            temperature_sensor=Celsius(values[1]),
+            temperature_external_1=Celsius(values[2]),
+            temperature_external_2=Celsius(values[3])
         )
         
         return result
@@ -96,9 +95,9 @@ class PLeaf(Leaf):
         to_return = {
             "nivelation_raw": readings.nivelation.preffered,
             "nivelation": readings.nivelation.preffered - offset,
-            "temp_sens": readings.temperature_sensor.preffered,
-            "temp_ext1": readings.temperature_external_1.preffered,
-            "temp_ext2": readings.temperature_external_2.preffered,
+            "temp_sens": readings.temperature_sensor.celsius,
+            "temp_ext1": readings.temperature_external_1.celsius,
+            "temp_ext2": readings.temperature_external_2.celsius,
             "errors": readings.invalid
         }
 

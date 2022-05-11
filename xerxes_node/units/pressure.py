@@ -6,11 +6,11 @@ from .unit import Unit
 class Pressure(Unit):
     @property
     def mmH2O(self):
-        return self.value * 0.10197162129779283
+        return self._value * 0.10197162129779283
 
     @property
     def bar(self):
-        return self.value * 0.00001
+        return self._value * 0.00001
 
     @property
     def Pascal(self):

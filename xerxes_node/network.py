@@ -17,20 +17,20 @@ def checksum(message: bytes) -> bytes:
     return summary.to_bytes(1, "big")
 
 
-class Addr:
-    def __init__(self, addr: Union[int, bytes]) -> None:
+class Addr(int):
+    def __new__(cls, addr: Union[int, bytes]) -> None:
         if isinstance(addr, bytes):
             addr = int(addr.hex(), 16)
 
         assert isinstance(addr, int), f"address must be of type bytes|int, got {type(addr)} instead."
         assert addr >= 0, "address must be positive"
         assert addr < 256, "address must be not higher than 255"
-
-        self._addr : int = addr         
+      
+        return super().__new__(cls, addr)
 
 
     def to_bytes(self):
-        return self._addr.to_bytes(1, "big")
+        return int(self).to_bytes(1, "big")
 
     
     @property
@@ -43,12 +43,11 @@ class Addr:
 
     
     def __eq__(self, __o: object) -> bool:
-        assert isinstance(__o, Addr), f"Invalid object type received, expected {type(Addr(1))}, got {type(__o)} instead."
-        return self._addr == __o._addr
+        return int(self) == int(__o)
 
 
-class NetworkBusy(Exception):
-    pass
+    def __hash__(self) -> int:
+        return int(self)
 
 
 @dataclass
@@ -95,7 +94,7 @@ class XerxesNetwork:
         raise NotImplementedError
 
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __del__(self):
         self._s.close()
 
 
