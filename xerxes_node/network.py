@@ -3,7 +3,6 @@
 
 
 from dataclasses import dataclass
-from enum import Enum
 import struct
 from typing import Union
 import serial

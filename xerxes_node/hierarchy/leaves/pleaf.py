@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass, is_dataclass
-from pprint import pprint
 from typing import Callable, List
 from xerxes_node.ids import MsgId
 from xerxes_node.medium import Medium

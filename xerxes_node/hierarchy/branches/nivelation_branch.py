@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
-from cmath import inf
-from pickle import APPEND
-from pprint import pprint
 import statistics
 from typing import Dict, List
 from xerxes_node.hierarchy.branches.branch import Branch
 from xerxes_node.hierarchy.leaves.leaf import LengthError
-from xerxes_node.hierarchy.leaves.pleaf import PLeaf, PLeafData
+from xerxes_node.hierarchy.leaves.pleaf import PLeaf
 
 
 class NivelationBranch(Branch):

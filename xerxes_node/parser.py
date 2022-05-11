@@ -3,7 +3,7 @@
 
 
 from typing import Dict
-from xerxes_node.hierarchy.leaves.pleaf import AveragePLeafData, PLeaf
+from xerxes_node.hierarchy.leaves.pleaf import PLeaf
 
 
 class NivelationParser:

@@ -13,7 +13,6 @@ from pymongo.collection import Collection
 from systemd import journal
 from xerxes_node.hierarchy.branches.nivelation_branch import NivelationBranch
 from xerxes_node.hierarchy.leaves.pleaf import PLeaf, pleaves_from_list
-from xerxes_node.hierarchy.leaves.pleaf import Medium
 from xerxes_node.network import Addr, XerxesNetwork
 import xerxes_node.config as config
 from xerxes_node.parser import NivelationParser
@@ -33,8 +32,7 @@ def home_dir(path):
     return os.path.join(os.path.expanduser("~"), path)
 
 
-
-def run(collection, system: XerxesSystem, sample_period: float, log_period: float):
+def run(collection: Collection, system: XerxesSystem, sample_period: float, log_period: float):
 
     current_period = log_period
     last_cycle = time.time()

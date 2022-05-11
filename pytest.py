@@ -7,8 +7,8 @@ import time
 import serial, struct
 
 from xerxes_node.ids import MsgId
-from xerxes_node.leaves.leaf_template import  NetworkError
-from xerxes_node.leaves.pleaf import PLeaf, PLeafData
+from xerxes_node.hierarchy.leaves.leaf import  NetworkError
+from xerxes_node.hierarchy.leaves.pleaf import PLeaf, PLeafData
 from xerxes_node.network import Addr, XerxesNetwork
 from xerxes_node import config
 

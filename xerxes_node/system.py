@@ -9,7 +9,6 @@ from threading import Thread
 from typing import List
 from xerxes_node.hierarchy.branches.branch import Branch
 from xerxes_node.hierarchy.leaves.leaf import ChecksumError, LengthError
-from xerxes_node.hierarchy.leaves.pleaf import PLeaf
 
 
 class NetworkBusy(Exception):

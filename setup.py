@@ -6,7 +6,7 @@ from distutils.core import setup
 files = ["static/*"]
 
 setup(name = "xerxes-node",
-    version = "0.6",
+    version = "0.7",
     description = "Xerxes monitoring node app",
     author = "themladypan",
     author_email = "stanislav@rubint.sk",
