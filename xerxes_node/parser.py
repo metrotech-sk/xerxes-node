@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 
-from pprint import pprint
-from typing import Dict, List
-from xerxes_node.leaves.pleaf import AveragePLeafData, PLeaf
+from typing import Dict
+from xerxes_node.leaves.pleaf import PLeaf
 
 
 class Parser:

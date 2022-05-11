@@ -10,24 +10,19 @@ import sys
 from pymongo import MongoClient
 from statistics import stdev
 from systemd import journal
-from xerxes_node.leaves.pleaf import PLeaf, Medium
+from xerxes_node.leaves.pleaf import PLeaf
 from xerxes_node.leaves.pleaf import Medium
-from xerxes_node.network import XerxesNetwork
+from xerxes_node.network import Addr, XerxesNetwork
 import xerxes_node.config as config
 from xerxes_node.parser import Parser
+from xerxes_node.system import XerxesSystem
 from xerxes_node.utils import get_cpu_temp_celsius
 
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
 
-
-import cppyy, os, time
-cppyy.add_include_path(os.path.join(script_dir, "lib/include"))
-[cppyy.include(i) for i in os.listdir(os.path.join(script_dir, "lib/include"))]
-cppyy.add_library_path(os.path.join(script_dir, "build"))
-cppyy.load_library("libxerxes")
-from cppyy.gbl import Xerxes as X
+import os, time
 
 
 HOSTNAME = socket.gethostname()
@@ -43,7 +38,7 @@ def run(db, leaves, sample_period=1, log_period=60):
     current_period = log_period
     last_cycle = time.time()
 
-    network = XerxesNetwork(leaves, std_timeout_s=0.2)
+    network = XerxesSystem(leaves, std_timeout_s=0.2)
 
     while True:
         while network.busy():
@@ -108,15 +103,25 @@ if __name__ == "__main__":
         log.addHandler(handler)
 
     log.info(f"Logger started, log file: {log_filename}")
-
-    rs485 = X.RS485(config.use_device)
-    comm = X.Protocol(rs485, 0x00)
+    
+    XN = XerxesNetwork(
+        port = config.use_device,
+        baudrate=115_200,
+        timeout=config.sensor_timeout,
+        my_addr=0x00
+    )
     
     # load sensor list from config
     leaves = []
     for key in config.leaves.keys():
         if config.leaves.get(key) == "nivelation":
-            leaves.append(PLeaf(comm, key, std_timeout=config.sensor_timeout, medium=config.used_medium))
+            leaves.append(
+                PLeaf(
+                    channel=XN,
+                    addr=Addr(key),
+                    medium=config.used_medium
+                )
+            )
 
     shard = MongoClient(config.mongo_URI)
     database = shard.get_database(config.use_database)

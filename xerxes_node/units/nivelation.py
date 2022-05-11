@@ -16,3 +16,6 @@ class Nivelation(Pressure):
     @property
     def preffered(self):
         return self.mm
+
+    def __repr__(self) -> str:
+        return f"Nivelation({self._value})"
