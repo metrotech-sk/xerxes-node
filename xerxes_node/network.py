@@ -61,11 +61,6 @@ class XerxesMessage:
     crc: int = 0
 
 
-class Duplex(Enum):
-    HALF = 1
-    FULL = 0
-
-
 class XerxesNetwork:
     def __init__(self, port: str, baudrate: int, timeout: float, my_addr: Union[Addr, int, bytes]) -> None:
         self._s = serial.Serial()

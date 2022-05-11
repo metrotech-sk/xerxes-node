@@ -4,12 +4,11 @@
 from dataclasses import dataclass, is_dataclass
 from pprint import pprint
 from typing import Callable, List
-from xerxes_node.hierarchy.leaves.leaf import LeafData
 from xerxes_node.ids import MsgId
 from xerxes_node.medium import Medium
 from xerxes_node.network import Addr
 from xerxes_node.units.nivelation import Nivelation
-from xerxes_node.hierarchy.leaves.leaf_template import Leaf
+from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData
 from xerxes_node.units.temp import Celsius, Temperature
 import struct
 
@@ -107,15 +106,14 @@ class PLeaf(Leaf):
         return to_return
         
         
-def pleaves_from_list(channel, addresses: List, std_timeout: float, medium: Callable) -> List[PLeaf]:
+def pleaves_from_list(channel, addresses: List[int], medium: Callable) -> List[PLeaf]:
     pleaves = []
-    for addr in addresses:
+    for addr_n in addresses:
         pleaves.append(
             PLeaf(
                 channel=channel,
-                my_addr=addr,
-                std_timeout=std_timeout,
+                addr=Addr(addr_n),
                 medium=medium
-                )
+            )
         )
     return pleaves

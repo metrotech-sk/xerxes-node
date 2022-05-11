@@ -37,6 +37,8 @@ class Leaf:
         self.channel: XerxesNetwork
         self.assign_channel(channel)
 
+        self._readings = []
+
 
     @property
     def addr(self):
@@ -47,8 +49,6 @@ class Leaf:
     def addr(self, __v):
         raise NotImplementedError
 
-
-        self._readings = []
 
     def ping(self):
         start = time.perf_counter_ns()

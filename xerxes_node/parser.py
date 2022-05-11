@@ -3,15 +3,14 @@
 
 
 from typing import Dict
-from xerxes_node.hierarchy.leaves.pleaf import PLeaf
+from xerxes_node.hierarchy.leaves.pleaf import AveragePLeafData, PLeaf
 
 
 class NivelationParser:
     @staticmethod
-    def to_dict(averages: Dict, reference_value: float):
+    def to_dict(averages: Dict, reference_addr: int):
         to_return = dict()
         for key in averages:
-            to_return[hex(key)] = PLeaf.to_dict(averages[key], offset=reference_value)
+            to_return[hex(key)] = PLeaf.to_dict(averages[key], offset=averages[reference_addr].nivelation.preffered)
 
-        to_return["fluid_column_height"] = reference_value
         return to_return

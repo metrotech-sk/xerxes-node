@@ -11,12 +11,13 @@ import sys
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from systemd import journal
-from xerxes_node.hierarchy.leaves.pleaf import PLeaf
+from xerxes_node.hierarchy.branches.nivelation_branch import NivelationBranch
+from xerxes_node.hierarchy.leaves.pleaf import PLeaf, pleaves_from_list
 from xerxes_node.hierarchy.leaves.pleaf import Medium
 from xerxes_node.network import Addr, XerxesNetwork
 import xerxes_node.config as config
-from xerxes_node.parser import NivelationParser, Parser
-from xerxes_node.system import XerxesSystem
+from xerxes_node.parser import NivelationParser
+from xerxes_node.system import Duplex, XerxesSystem
 from xerxes_node.utils import get_cpu_temp_celsius
 
 
@@ -33,26 +34,21 @@ def home_dir(path):
 
 
 
-def run(collection: Collection, network: XerxesNetwork, sample_period: int, log_period: int):
+def run(collection, system: XerxesSystem, sample_period: float, log_period: float):
 
     current_period = log_period
     last_cycle = time.time()
 
-    network = XerxesSystem(leaves, std_timeout_s=0.2)
-
     while True:
-        # wait until network is ready
-        network.wait()
+        while system.busy():
+            pass
+        system.poll()
 
-        # poll for data from sensors
-        network.poll()
-
-        # calculate cycletime and delays
         cycletime = time.time() - last_cycle
-        if sample_period-cycletime > 0:
+        try:
             time.sleep(sample_period-cycletime)
-        else:
-            log.warning(f"Cycle time: {cycletime}, is longer than desired sample period: {sample_period}.")
+        except ValueError:
+            log.warning(f"Cycle time {cycletime} is longer than sample period {sample_period}")
 
         last_cycle = time.time()
         current_period += sample_period
@@ -61,12 +57,11 @@ def run(collection: Collection, network: XerxesNetwork, sample_period: int, log_
             current_period = 0
             
             data = dict()
-            network.wait()
-
-            for branch in network.branches:
+            
+            for branch in system.branches:
                 data[branch.name] = NivelationParser.to_dict(
                     averages=branch.read(),
-                    reference_value=branch.column_height
+                    reference_addr=branch.ref_addr
                 )
 
             data.update(
@@ -114,21 +109,43 @@ if __name__ == "__main__":
     XN = XerxesNetwork(
         port = config.use_device,
         baudrate=115_200,
-        timeout=config.sensor_timeout,
+        timeout=config.port_timeout,
         my_addr=0x00
     )
-    
+
     # load sensor list from config
-    leaves = []
-    for key in config.leaves.keys():
-        if config.leaves.get(key) == "nivelation":
-            leaves.append(
-                PLeaf(
-                    channel=XN,
-                    addr=Addr(key),
-                    medium=config.used_medium
+    branches = []
+
+    for branch_name in config.branches:
+        # parse branches from config according to their type
+        branch = config.branches[branch_name]
+        if branch["type"] == NivelationBranch:
+            ref_leaf = PLeaf(
+                channel=XN,
+                medium=branch["medium"],
+                addr=Addr(branch["reference_leaf"]),
+            
+            )
+            pleaves = pleaves_from_list(
+                channel=XN, 
+                addresses=branch["leaves"],
+                medium=branch["medium"]
+                )
+            
+            branches.append(
+                NivelationBranch(
+                    leaves=pleaves,
+                    name=branch_name,
+                    reference_leaf=ref_leaf, 
+                    column_avg_samples=branch["column_avg_samples"]
                 )
             )
+
+    XS = XerxesSystem(
+        branches=branches,
+        mode=Duplex.HALF,
+        std_timeout_s=config.network_timeout
+    )
 
     shard = MongoClient(config.mongo_URI)
     database = shard.get_database(config.use_database)
@@ -141,7 +158,7 @@ if __name__ == "__main__":
 
     run(
         collection=collection,
-        network=x_network,
+        system=XS,
         sample_period=config.sample_period, 
         log_period=config.update_period
     )

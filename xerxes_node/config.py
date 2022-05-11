@@ -5,12 +5,13 @@ from xerxes_node.hierarchy.branches.nivelation_branch import NivelationBranch
 from xerxes_node.medium import Medium
 
 
-logging_level = 'INFO' # DEBUG INFO WARNING ERROR
+logging_level = 'DEBUG' # DEBUG INFO WARNING ERROR
 mongo_URI = "mongodb+srv://node:prokopcakovamama@xerxes.57jmr.mongodb.net/alfa?retryWrites=true&w=majority"
-use_database = "pri_sajbach_v2"
-sample_period = 0.2  # how often read sensors, [s]
-network_timeout = 0.5  # read until, [s]
-update_period = 10  # how often to push to DB, [s]
+use_database = "pri_sajbach"
+sample_period = 1  # how often read sensors, [s]
+port_timeout = 0.005
+network_timeout = 0.05  # read until, [s]
+update_period = 60  # how often to push to DB, [s]
 use_device = "/dev/ttyS0"  # device used for communication
 used_medium = Medium.propyleneglycol  # used medium in pressure bus
 
@@ -25,7 +26,6 @@ branches = {
             0x03                : "nivelation",
         },
         "medium" : Medium.propyleneglycol,
-        "sensor_timeout" : 0.005,
-        "column_avg_samples": 300  # samples
+        "column_avg_samples": 10  # samples
     }
 }
