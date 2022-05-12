@@ -73,7 +73,7 @@ class XerxesNetwork:
         self._s.port = port
 
     
-    def init(self, baudrate: int, timeout: float, my_addr: Union[Addr, int, bytes]):
+    def init(self, baudrate: int, timeout: float, my_addr: Union[Addr, int, bytes]) -> XerxesNetwork:
         self._s.baudrate = baudrate
         self._s.timeout = timeout
 
@@ -86,6 +86,8 @@ class XerxesNetwork:
         
         self._s.open()
         self._opened = True
+
+        return self
 
 
     def __new__(cls: XerxesNetwork, port: str) -> XerxesNetwork:

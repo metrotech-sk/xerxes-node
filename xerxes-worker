@@ -106,9 +106,7 @@ if __name__ == "__main__":
     
     XN = XerxesNetwork(
         port = config.use_device
-    )
-
-    XN.init(
+    ).init(
         baudrate=115_200,
         timeout=config.port_timeout,
         my_addr=0x00
