@@ -60,28 +60,43 @@ class XerxesMessage:
     crc: int = 0
 
 
+class XerxesNetwork: ...
+
+
 class XerxesNetwork:
-    def __init__(self, port: str, baudrate: int, timeout: float, my_addr: Union[Addr, int, bytes]) -> None:
+    _ic = 0
+    _instances = {}
+    _opened = False
+
+    def __init__(self, port: str, ) -> None:
         self._s = serial.Serial()
         self._s.port = port
+
+    
+    def init(self, baudrate: int, timeout: float, my_addr: Union[Addr, int, bytes]):
         self._s.baudrate = baudrate
         self._s.timeout = timeout
 
-        if isinstance(my_addr, int):
+        if isinstance(my_addr, int) or isinstance(my_addr, bytes):
             self._addr = Addr(my_addr)
-        elif isinstance(my_addr, bytes):
-            self._addr = int(my_addr.hex(), 16)
         elif isinstance(my_addr, Addr):
             self._addr = my_addr
         else:
             raise TypeError(f"my_addr type wrong, expected Union[Addr, int, bytes], got {type(my_addr)} instead")
-
         
         self._s.open()
+        self._opened = True
+
+
+    def __new__(cls: XerxesNetwork, port: str) -> XerxesNetwork:
+        if port not in cls._instances.keys():
+            cls._instances[port] = object.__new__(cls)
+
+        return cls._instances[port]
 
 
     def __repr__(self) -> str:
-        return f"XerxesNetwork(port={self._s.port}, baudrate={self._s.baudrate}, timeout={self._s.timeout}, my_addr={self._addr})"
+        return f"XerxesNetwork(port='{self._s.port}', baudrate={self._s.baudrate}, timeout={self._s.timeout}, my_addr={self._addr})"
 
     
     @property
@@ -99,6 +114,8 @@ class XerxesNetwork:
 
 
     def read_msg(self) -> XerxesMessage:
+        assert self._opened, "Serial port not opened yet. Call .init() first"
+
         # wait for start of message
         next_byte = self._s.read(1)
         while next_byte != b"\x01":
@@ -152,6 +169,8 @@ class XerxesNetwork:
 
 
     def send_msg(self, destination: Addr, payload: bytes) -> None:    
+        assert self._opened, "Serial port not opened yet. Call .init() first"
+
         if not isinstance(destination, Addr):
             destination = Addr(destination)
             

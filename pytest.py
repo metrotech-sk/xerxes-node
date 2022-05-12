@@ -106,11 +106,12 @@ def leaf_generator(devId: int, address: int, serial_port: serial.Serial) -> Xerx
 if __name__ == "__main__":
     XN = XerxesNetwork(
         port = config.use_device,
+    )
+    XN.init(
         baudrate=115_200,
-        timeout=config.sensor_timeout,
+        timeout=config.network_timeout,
         my_addr=0x00
     )
-
 
     leaves = []
     addresses = [Addr(i) for i in range(1, 32)]

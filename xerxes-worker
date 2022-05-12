@@ -105,7 +105,10 @@ if __name__ == "__main__":
     log.info(f"Logger started, log file: {log_filename}")
     
     XN = XerxesNetwork(
-        port = config.use_device,
+        port = config.use_device
+    )
+
+    XN.init(
         baudrate=115_200,
         timeout=config.port_timeout,
         my_addr=0x00
