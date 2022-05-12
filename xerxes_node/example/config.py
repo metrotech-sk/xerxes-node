@@ -5,7 +5,7 @@ from xerxes_node.hierarchy.branches.nivelation_branch import NivelationBranch
 from xerxes_node.medium import Medium
 
 
-logging_level = 'DEBUG' # DEBUG INFO WARNING ERROR
+logging_level = 'INFO' # DEBUG INFO WARNING ERROR
 mongo_URI = "mongodb+srv://node:prokopcakovamama@xerxes.57jmr.mongodb.net/alfa?retryWrites=true&w=majority"
 use_database = "pri_sajbach"
 sample_period = 1  # how often read sensors, [s]
