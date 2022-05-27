@@ -3,8 +3,10 @@
 
 
 from typing import List
-
 from xerxes_node.hierarchy.leaves.leaf import Leaf
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class Branch:
@@ -18,8 +20,16 @@ class Branch:
         return str(self._name)
     
     @name.setter
-    def name(self, val):
+    def name(self, __val):
         raise NotImplementedError
+    
+    @property
+    def leaves(self):
+        return self._leaves
+    
+    @leaves.setter
+    def leaves(self, __o):
+        raise NotImplementedError("you should not acces leaves directly")
         
     def __iter__(self):
         self._lv_it = 0
@@ -37,3 +47,6 @@ class Branch:
     
     def read(self) -> None:
         raise NotImplementedError
+    
+    def to_dict(self) -> None:
+        raise NotImplementedError("You should implement this routine")

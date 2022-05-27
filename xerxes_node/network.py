@@ -58,6 +58,18 @@ class XerxesMessage:
     message_id: MsgId
     payload: bytes
     crc: int = 0
+    
+
+class FutureXerxesNetwork:
+    def send_msg(self, __dst, __pld) -> None:
+        raise NotImplementedError("You should assign real XerxesNetwork instead of FutureXN")
+    
+    def read_msg(self) -> None:
+        raise NotImplementedError("You should assign real XerxesNetwork instead of FutureXN")
+    
+    def __repr__(self):
+        return f"FutureXerxesNetwork()"
+         
 
 
 class XerxesNetwork: ...

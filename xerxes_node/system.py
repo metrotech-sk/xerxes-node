@@ -9,7 +9,7 @@ from threading import Thread
 from typing import List
 from xerxes_node.hierarchy.branches.branch import Branch
 from xerxes_node.hierarchy.leaves.leaf import ChecksumError, LengthError
-
+log = logging.getLogger(__name__)
 
 class NetworkBusy(Exception):
     pass
@@ -27,7 +27,6 @@ class XerxesSystem:
         self._access_lock = Lock()
         self._std_timeout_s = std_timeout_s
         self._readings = []
-        self.log = logging.getLogger(__name__)
 
     def append_branch(self, branch: Branch):
         self._branches.append(branch)
@@ -37,20 +36,20 @@ class XerxesSystem:
         if self._mode == Duplex.HALF:
             lock_acq = self._access_lock.acquire(blocking=True, timeout=self._std_timeout_s)
             if not lock_acq:
-                self.log.warning("trying to access busy network")
+                log.warning("trying to access busy network")
                 raise TimeoutExpired("unable to access network within timeout")
 
 
         for branch in self._branches:
             for leaf in branch:
                 try:
-                    leaf.read()
+                    leaf.fetch()
                 except LengthError:
-                    self.log.warning(f"message from leaf {leaf.address} has invalid length")
+                    log.warning(f"message from leaf {leaf.address} has invalid length")
                 except ChecksumError:
-                    self.log.warning(f"message from leaf {leaf.address} has invalid checksum")
+                    log.warning(f"message from leaf {leaf.address} has invalid checksum")
                 except TimeoutError:
-                    self.log.warning(f"Leaf {leaf.address} is not responding.")
+                    log.warning(f"Leaf {leaf.address} is not responding.")
         
         # release access lock
         if self._mode == Duplex.HALF:
@@ -75,5 +74,5 @@ class XerxesSystem:
         return list(self._branches)
     
     @branches.setter
-    def branches(self, tmp):
+    def branches(self, __b):
         raise NotImplementedError

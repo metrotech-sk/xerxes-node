@@ -4,10 +4,12 @@
 from distutils.command.config import config
 from statistics import mean, median, stdev
 import time
+from typing import List
 import serial, struct
+from xerxes_node.hierarchy.leaves.ileaf import ILeaf
 
-from xerxes_node.ids import MsgId
-from xerxes_node.hierarchy.leaves.leaf import  NetworkError
+from xerxes_node.ids import DevId, MsgId
+from xerxes_node.hierarchy.leaves.leaf import  Leaf, NetworkError
 from xerxes_node.hierarchy.leaves.pleaf import PLeaf, PLeafData
 from xerxes_node.network import Addr, XerxesNetwork
 from xerxes_node import config
@@ -113,22 +115,37 @@ if __name__ == "__main__":
         my_addr=0x00
     )
 
-    leaves = []
+    leaves: List[Leaf] = []
     addresses = [Addr(i) for i in range(1, 32)]
+    addresses = [Addr(4)]
 
     
     while addresses:
         addr = addresses.pop()
 
         try:
-            l = PLeaf(
+            l = Leaf(
                 channel=XN,
-                addr=addr,
-                medium=config.used_medium
+                addr=addr
             )
-            ping = l.ping()
-            leaves.append(l)
-            print(f"Device {l.addr} found on network, ping: {ping*1000}ms")
+            ping, devid = l.ping()
+            if devid == DevId.PRESSURE_60MBAR_2TEMP or devid == DevId.PRESSURE_600MBAR_2TEMP:
+                leaves.append(
+                    PLeaf(
+                        channel=XN,
+                        addr=addr
+                    )
+                )
+            elif devid == DevId.ANGLE_XY_90:
+                leaves.append(
+                    ILeaf(
+                        channel=XN,
+                        addr=addr
+                    )
+                )
+            else:
+                leaves.append(l)
+            print(f"Device {l.addr} found on network, ping: {ping*1000}ms, device id: {devid}")
             
         except TimeoutError:
             print(addr, "timeouted")
@@ -136,13 +153,13 @@ if __name__ == "__main__":
         except NetworkError:
             print(addr, "sent wrong reply")
         
-
-    while 1:
+        
+    for i in range(10):
         start = time.time()
         for leaf in leaves:
             try:
-                reading: PLeafData = leaf.read()
-                print(f"{leaf.addr} replied with: {reading.nivelation.mm}mm, {reading.temperature_sensor.preffered}°C.")
+                reading = leaf.read()
+                print(reading)
             except TimeoutError:
                 print(f"{leaf.addr} timeouted...")
             except IOError:

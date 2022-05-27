@@ -5,14 +5,11 @@ from dataclasses import dataclass, is_dataclass
 from typing import Callable, List
 from xerxes_node.ids import MsgId
 from xerxes_node.medium import Medium
-from xerxes_node.network import Addr
+from xerxes_node.network import Addr, FutureXerxesNetwork, XerxesNetwork
 from xerxes_node.units.nivelation import Nivelation
-from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData
+from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData, LengthError
 from xerxes_node.units.temp import Celsius, Temperature
 import struct
-
-
-class LengthError(Exception): ...
 
 
 @dataclass
@@ -32,19 +29,26 @@ class AveragePLeafData:
 
 
 class PLeaf(Leaf):
-    def __init__(self, channel, addr: Addr, *, medium: Callable = Medium.water):
-        super().__init__(channel, addr)
+    def __init__(self, addr: Addr, *, channel: XerxesNetwork=FutureXerxesNetwork,  medium: Callable = Medium.water):
+        super().__init__(
+            addr=addr, 
+            channel=channel
+        )
 
         self.conv_func = medium
         
-    def read(self) -> PLeafData:
+    def __repr__(self):
+        return f"PLeaf(channel={self.channel}, addr={self.address}, medium={self.conv_func})"
+    
+        
+    def read(self):
         reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes())
 
         # unpack 4 uint32_t's
         values = struct.unpack("!ffff", reply.payload)  # unpack 4 floats: presure + 3x temp.
 
         # convert to sensible units
-        result = PLeafData(
+        return PLeafData(
             addr=self.address,
             nivelation=Nivelation(values[0], self.conv_func),  # pressure in 
             temperature_sensor=Celsius(values[1]),
@@ -52,7 +56,9 @@ class PLeaf(Leaf):
             temperature_external_2=Celsius(values[3])
         )
         
-        self._readings.append(result)
+        
+    def fetch(self):
+        self._readings.append(self.read())
             
     
     @staticmethod
@@ -105,7 +111,7 @@ class PLeaf(Leaf):
         return to_return
         
         
-def pleaves_from_list(channel, addresses: List[int], medium: Callable) -> List[PLeaf]:
+def pleaves_from_list(addresses: List[int], medium: Callable, channel: XerxesNetwork = FutureXerxesNetwork) -> List[PLeaf]:
     pleaves = []
     for addr_n in addresses:
         pleaves.append(

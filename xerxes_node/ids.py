@@ -28,7 +28,7 @@ class Id:
 
 
     def __repr__(self):
-        return self.to_bytes()
+        return f"Id({self.to_bytes()})"
 
     
     @property
@@ -37,7 +37,7 @@ class Id:
 
 
     def __str__(self):
-        return str(self.to_bytes().hex())
+        return f"Id({self.to_bytes().hex()})"
 
 
     def __eq__(self, __o: Id) -> bool:
@@ -119,6 +119,9 @@ class MsgId(MsgIdMixin):
         return f"MsgId(0x{self.to_bytes().hex()})"
 
 
+    def __str__(self):
+        return self.__repr__()
+
 
 class DevId(DevIdMixin):
     # Pressure sensors */
@@ -147,3 +150,10 @@ class DevId(DevIdMixin):
     # Distance sensor 0-225mm, resistive, linear*/
     DIST_225MM                = DevIdMixin(0x41)
 
+
+    def __repr__(self):
+        return f"DevId(0x{self.to_bytes().hex()})"
+    
+    
+    def __str__(self):
+        return self.__repr__()

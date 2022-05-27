@@ -3,11 +3,12 @@
 
 from dataclasses import dataclass
 import os
+import struct
 import time
 from typing import List
-from xerxes_node.ids import MsgId
+from xerxes_node.ids import DevId, MsgId
 
-from xerxes_node.network import Addr, XerxesMessage, XerxesNetwork
+from xerxes_node.network import Addr, FutureXerxesNetwork, XerxesMessage, XerxesNetwork
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
@@ -16,12 +17,10 @@ script_dir = os.path.dirname(file_path)
 class NetworkError(Exception): ...
 
 
-class LengthError(Exception):
-    pass
+class LengthError(Exception): ...
 
 
-class ChecksumError(Exception):
-    pass
+class ChecksumError(Exception): ...
 
 
 @dataclass
@@ -30,24 +29,14 @@ class LeafData(object):
 
 
 class Leaf:
-    def __init__(self, channel: XerxesNetwork, address: Addr):
-        assert(isinstance(address, Addr))
-        self._address = address
+    def __init__(self, addr: Addr, channel: XerxesNetwork=FutureXerxesNetwork):
+        assert(isinstance(addr, Addr))
+        self._address = addr
 
         self.channel: XerxesNetwork
         self.assign_channel(channel)
 
         self._readings = []
-
-
-    @property
-    def addr(self):
-        return self._address
-
-
-    @addr.setter
-    def addr(self, __v):
-        raise NotImplementedError
 
 
     def ping(self):
@@ -59,7 +48,7 @@ class Leaf:
         )
         reply = self.channel.read_msg()
         if reply.message_id == MsgId.PING_REPLY and reply.destination == self.channel.addr:
-            return (time.perf_counter_ns() - start) /10**9
+            return (time.perf_counter_ns() - start) /10**9, DevId(struct.unpack("!B", reply.payload)[0])
         elif reply.message_id != MsgId.PING_REPLY:
             NetworkError("Invalid reply received ({reply.message_id})")
         else:

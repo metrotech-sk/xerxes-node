@@ -3,13 +3,12 @@
 
 
 import logging
+log = logging.getLogger(__name__)
 import os
 from xerxes_node.hierarchy.leaves.leaf import Leaf
 
 
 def discover(comm, leaves, addr_range=32):
-    log = logging.getLogger(__name__)
-
     found_addresses = []
 
     for i in range(3):
