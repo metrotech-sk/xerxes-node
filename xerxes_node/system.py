@@ -8,7 +8,7 @@ from threading import Lock
 from threading import Thread
 from typing import List
 from xerxes_node.hierarchy.branches.branch import Branch
-from xerxes_node.hierarchy.leaves.leaf import ChecksumError, LengthError
+from xerxes_node.network import ChecksumError, LengthError, MessageIncomplete
 log = logging.getLogger(__name__)
 
 class NetworkBusy(Exception):
@@ -44,10 +44,10 @@ class XerxesSystem:
             for leaf in branch:
                 try:
                     leaf.fetch()
-                except LengthError:
-                    log.warning(f"message from leaf {leaf.address} has invalid length")
                 except ChecksumError:
                     log.warning(f"message from leaf {leaf.address} has invalid checksum")
+                except MessageIncomplete:
+                    log.warning(f"message from leaf {leaf.address} is not complete.")
                 except TimeoutError:
                     log.warning(f"Leaf {leaf.address} is not responding.")
         

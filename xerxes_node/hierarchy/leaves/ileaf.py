@@ -9,7 +9,7 @@ from typing import List
 from xerxes_node.ids import MsgId
 from xerxes_node.network import Addr
 from xerxes_node.units.angle import Angle
-from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData, LengthError
+from xerxes_node.hierarchy.leaves.leaf import EmptyBufferError, Leaf, LeafData
 from xerxes_node.units.temp import Celsius, Temperature
 import struct
 
@@ -61,7 +61,7 @@ class ILeaf(Leaf):
         valid = 0
 
         if arrlen<1:
-            raise LengthError("Unable to calculate average from empty list")
+            raise EmptyBufferError("Unable to calculate average from empty list")
         
         x, y, t1, t2 = [], [], [], []
         for r in readings:

@@ -7,7 +7,7 @@ from xerxes_node.ids import MsgId
 from xerxes_node.medium import Medium
 from xerxes_node.network import Addr, FutureXerxesNetwork, XerxesNetwork
 from xerxes_node.units.nivelation import Nivelation
-from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData, LengthError
+from xerxes_node.hierarchy.leaves.leaf import EmptyBufferError, Leaf, LeafData
 from xerxes_node.units.temp import Celsius, Temperature
 import struct
 
@@ -66,7 +66,7 @@ class PLeaf(Leaf):
         valid = 0
 
         if arrlen<1:
-            raise LengthError("Unable to calculate average from empty list")
+            raise EmptyBufferError("Unable to calculate average from empty list")
         
         n, ts, t1, t2 = [], [], [], []
         for r in readings:

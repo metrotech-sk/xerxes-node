@@ -4,7 +4,7 @@
 import statistics
 from typing import Dict, List
 from xerxes_node.hierarchy.branches.branch import Branch
-from xerxes_node.hierarchy.leaves.leaf import LengthError
+from xerxes_node.hierarchy.leaves.leaf import EmptyBufferError
 from xerxes_node.hierarchy.leaves.pleaf import PLeaf
 
 
@@ -46,8 +46,8 @@ class NivelationBranch(Branch):
                     if len(self.fluid_column_buffer) > self._n_of_samples:
                         self.fluid_column_buffer.pop()
 
-            except LengthError:
-                log.error(f"No data from ILeaf {leaf.address}")
+            except EmptyBufferError:
+                log.error(f"No data from PLeaf {leaf.address}")
         
         return readings
         

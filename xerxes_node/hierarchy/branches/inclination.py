@@ -4,9 +4,11 @@
 from typing import Dict, List
 from xerxes_node.hierarchy.branches.branch import Branch
 from xerxes_node.hierarchy.leaves.ileaf import ILeaf
-from xerxes_node.hierarchy.leaves.leaf import LengthError
 
 import logging
+from xerxes_node.hierarchy.leaves.leaf import EmptyBufferError
+
+from xerxes_node.network import LengthError
 log = logging.getLogger(__name__)
 
 
@@ -24,7 +26,7 @@ class InclinationBranch(Branch):
                     readings=leaf.pop_all()
                 )    
                 readings[leaf.address] = avg_of_readings
-            except LengthError:
+            except EmptyBufferError:
                 log.error(f"No data from ILeaf {leaf.address}")
         
         return readings

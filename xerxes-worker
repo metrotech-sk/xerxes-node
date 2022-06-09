@@ -111,7 +111,7 @@ if __name__ == "__main__":
         my_addr=0x00
     )
 
-    # load sensor list from config
+    # for each sensor, use communicaiton channel XN
     for branch in config.branches:
         for leaf in branch.leaves:
             leaf.assign_channel(XN)

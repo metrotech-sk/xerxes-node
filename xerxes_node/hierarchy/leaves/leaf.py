@@ -13,17 +13,11 @@ from xerxes_node.network import Addr, FutureXerxesNetwork, XerxesMessage, Xerxes
 import logging
 log = logging.getLogger(__name__)
 
-file_path = os.path.realpath(__file__)
-script_dir = os.path.dirname(file_path)
-
 
 class NetworkError(Exception): ...
 
 
-class LengthError(Exception): ...
-
-
-class ChecksumError(Exception): ...
+class EmptyBufferError(Exception): ...
 
 
 @dataclass
@@ -70,10 +64,7 @@ class Leaf:
 
 
     def fetch(self):
-        try:
-            self._readings.append(self.read())
-        except IOError:
-            log.warning(f"Invalid checksum received from node: {self.address}")
+        self._readings.append(self.read())
 
 
     @property

@@ -9,6 +9,15 @@ import serial
 from xerxes_node.ids import MsgId
 
 
+class ChecksumError(Exception): ...
+
+
+class MessageIncomplete(Exception): ...
+
+
+class LengthError(Exception): ...
+
+
 def checksum(message: bytes) -> bytes:
     summary = sum(message)
     summary ^= 0xFF  # get complement of summary
@@ -152,7 +161,7 @@ class XerxesNetwork:
         # read message ID
         msg_id_raw = self._s.read(2)
         if(len(msg_id_raw)!=2):
-            raise IOError("Invalid message id received")
+            raise MessageIncomplete("Invalid message id received")
         for i in msg_id_raw:
             checksum += i
 
@@ -167,10 +176,12 @@ class XerxesNetwork:
         
         #read checksum
         rcvd_chks = self._s.read(1)
+        if(len(rcvd_chks)!=1):
+            raise MessageIncomplete("Received message incomplete")
         checksum += int(rcvd_chks.hex(), 16)
         checksum %= 0x100
         if checksum:
-            raise IOError("Invalid checksum received")
+            raise ChecksumError("Invalid checksum received")
 
         return XerxesMessage(
             source=Addr(src),
