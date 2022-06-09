@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from xerxes_node.hierarchy.branches.inclination import InclinationBranch
+from xerxes_node.hierarchy.branches.length import LengthBranch
 from xerxes_node.hierarchy.branches.nivelation import NivelationBranch
 from xerxes_node.hierarchy.leaves.ileaf import ILeaf
+from xerxes_node.hierarchy.leaves.length import LengthLeaf
 from xerxes_node.hierarchy.leaves.pleaf import PLeaf, pleaves_from_list
 from xerxes_node.medium import Medium
 from xerxes_node.network import Addr
@@ -39,6 +41,13 @@ branches = [
         leaves=[
             ILeaf(addr=Addr(0x04)),
             ILeaf(addr=Addr(0x05)),
+        ]
+    ),
+    
+    LengthBranch(
+        name="lengths_1",
+        leaves=[
+            LengthLeaf(addr=Addr(0x06))
         ]
     )
 ]
