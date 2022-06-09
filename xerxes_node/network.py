@@ -33,7 +33,7 @@ class Addr(int):
 
         assert isinstance(addr, int), f"address must be of type bytes|int, got {type(addr)} instead."
         assert addr >= 0, "address must be positive"
-        assert addr < 256, "address must be not higher than 255"
+        assert addr < 256, "address must be lower than 256"
       
         return super().__new__(cls, addr)
 
@@ -78,7 +78,6 @@ class FutureXerxesNetwork:
     
     def __repr__(self):
         return f"FutureXerxesNetwork()"
-         
 
 
 class XerxesNetwork: ...

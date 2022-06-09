@@ -18,7 +18,6 @@ class Id:
 
         self._id : int = id
 
-
     def to_bytes(self): ...
 
 
@@ -63,7 +62,6 @@ class DevIdMixin(Id):
         return 1
 
 
-
 class MsgId(MsgIdMixin):   
     # Ping packet
     PING                          = MsgIdMixin(0x0000)
@@ -77,13 +75,20 @@ class MsgId(MsgIdMixin):
     # Acknowledge NOK packet
     ACK_NOK                       = MsgIdMixin(0x0003)
     
-    
     # Request to send measurements
     FETCH_MEASUREMENT             = MsgIdMixin(0x0100)
     
     # Synchronisaton message
     SYNC                          = MsgIdMixin(0x0101)
     
+    # Set register to a value 
+    # The message prototype is <MSGID_SET> <REG_ID> <LEN> <BYTE_1> ... <BYTE_N>
+    SET                           = MsgIdMixin(0x0200)
+    
+    # Read  up to <LEN> bytes from device register, starting at <REG_ID>
+    # The request prototype is <MSGID_READ> <REG_ID> <LEN>           
+    READ                          = MsgIdMixin(0x0201)
+    READ_VALUE                    = MsgIdMixin(0x0202)
     
     # Pressure value + 2 temperatures
     PRESSURE_mPa_111TEMP          = MsgIdMixin(0x0403)    
@@ -103,6 +108,9 @@ class MsgId(MsgIdMixin):
     STRAIN_24BIT_01TEMP           = MsgIdMixin(0x1101)
     # Strain value w/o temperature
     STRAIN_24BIT_00TEMP           = MsgIdMixin(0x1100)
+
+    # Cutter 1000P/R, 63mm wheel */
+    PULSES                        = MsgIdMixin(0x2A01)
 
     
     # 2 distance values, 0-22000um, no temp
@@ -149,6 +157,10 @@ class DevId(DevIdMixin):
     DIST_22MM                 = DevIdMixin(0x40)
     # Distance sensor 0-225mm, resistive, linear*/
     DIST_225MM                = DevIdMixin(0x41)
+    
+    
+    # Encoder reader */
+    DEVID_ENC_1000PPR         = DevIdMixin(0x2A)
 
 
     def __repr__(self):
