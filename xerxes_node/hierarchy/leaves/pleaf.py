@@ -11,6 +11,8 @@ from xerxes_node.hierarchy.leaves.leaf import Leaf, LeafData, LengthError
 from xerxes_node.units.temp import Celsius, Temperature
 import struct
 
+import logging
+log = logging.getLogger(__name__)
 
 @dataclass
 class PLeafData(LeafData):
@@ -55,10 +57,6 @@ class PLeaf(Leaf):
             temperature_external_1=Celsius(values[2]),
             temperature_external_2=Celsius(values[3])
         )
-        
-        
-    def fetch(self):
-        self._readings.append(self.read())
             
     
     @staticmethod

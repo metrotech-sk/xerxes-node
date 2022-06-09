@@ -58,6 +58,8 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
                     data[branch.name] = branch.to_dict()
                 except NotImplementedError:
                     log.error("Branch is not implemented")
+                except KeyError as e:
+                    log.error(f"Accessing unawailable node. Details: {e}")
 
             data.update(
                 {

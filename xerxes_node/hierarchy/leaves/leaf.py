@@ -10,6 +10,9 @@ from xerxes_node.ids import DevId, MsgId
 
 from xerxes_node.network import Addr, FutureXerxesNetwork, XerxesMessage, XerxesNetwork
 
+import logging
+log = logging.getLogger(__name__)
+
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
 
@@ -64,6 +67,13 @@ class Leaf:
     
     def read(self) -> XerxesMessage:
         return self.exchange(MsgId.FETCH_MEASUREMENT.bytes)
+
+
+    def fetch(self):
+        try:
+            self._readings.append(self.read())
+        except IOError:
+            log.warning(f"Invalid checksum received from node: {self.address}")
 
 
     @property
