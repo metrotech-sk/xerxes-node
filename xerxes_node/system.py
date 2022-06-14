@@ -50,6 +50,9 @@ class XerxesSystem:
                     log.warning(f"message from leaf {leaf.address} is not complete.")
                 except TimeoutError:
                     log.warning(f"Leaf {leaf.address} is not responding.")
+                except Exception as e:
+                    log.error(f"Unexpected error: {e}")    
+                
         
         # release access lock
         if self._mode == Duplex.HALF:

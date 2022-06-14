@@ -170,6 +170,8 @@ class XerxesNetwork:
         raw_msg = bytes(0)
         for i in range(int(msg_len -    7)):
             next_byte = self._s.read(1)
+            if(len(next_byte)!=1):
+                raise MessageIncomplete("Received message incomplete")
             raw_msg += next_byte
             checksum += int(next_byte.hex(), 16)
         
