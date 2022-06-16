@@ -27,7 +27,6 @@ fi
 echo "updating system..."
 apt update
 apt upgrade -y
-cat requirements.apt | xargs apt install -y
 
 snap install zerotier
 
@@ -51,18 +50,16 @@ groupadd -f --system spiuser
 usermod -a -G spiuser $xerxes_user
 usermod -aG dialout $xerxes_user
 
-su $xerxes_user
 cd /home/$xerxes_user
 
-# download my public key
-wget https://gist.githubusercontent.com/theMladyPan/8a73cc10c35b78c20a1d64c694740658/raw/5dd4e8b32e8fa42bf595d936d8c4d7f454da8e6c/id_rsa.pub
-mv id_rsa.pub ./.ssh
 
 # clone repo
 echo "cloning xerxes repository..."
-git clone https://themladypan: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@github.com/xeus-cer/xerxes-node.git
+sudo -u $xerxes_user git clone https://themladypan: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@github.com/xeus-cer/xerxes-node.git
 cd xerxes-node
 git checkout $git_branch
+
+cat script/requirements.apt | xargs apt install -y
 
 # install xerxes systemd daemon
 echo "installing xerxes daemon..."
@@ -79,12 +76,6 @@ echo "creating virtual environment..."
 python3 -m venv ./venv
 echo "installing and building dependencies, this may take several hours"
 venv/bin/python -m pip install -r requirements.txt
-
-echo "building libraries"
-mkdir build
-cd build
-cmake ../lib&&make
-cd ..
 
 spd-say "Installation complete!"
 

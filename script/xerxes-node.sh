@@ -13,8 +13,8 @@ stop() {
     # example: killproc program_name
     # TODO (@theMladyPan) toto lepšie spraviť
     echo "killing xerxes-worker"
-    ps ax|grep xerxes-worker|grep -v grep|cut -d"/" -f1|cut -d"p" -f1|xargs kill
-    # killall xerxes-worker
+    # ps ax|grep xerxes-worker|grep -v grep|cut -d"/" -f1|cut -d"p" -f1|xargs kill
+    killall xerxes-node.sh
 }
 
 case "$1" in 
@@ -31,6 +31,7 @@ case "$1" in
     status)
        # code to check status of app comes here 
        # example: status program_name
+       ps ax|grep xerxes
        ;;
     *)
        echo "Usage: $0 {start|stop|status|restart}"
