@@ -34,4 +34,4 @@ def get_cpu_temp_celsius():
             cpu_temp = int(tf.read())
         return cpu_temp/1000
     else:
-        raise IOError("CPU temperature unavailable")
+        return None

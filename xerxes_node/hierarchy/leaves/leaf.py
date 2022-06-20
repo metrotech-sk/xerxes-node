@@ -21,8 +21,8 @@ class EmptyBufferError(Exception): ...
 
 
 @dataclass
-class LeafData(object):
-    addr: int
+class LeafData(object): ...
+    # addr: int
 
 
 class Leaf:

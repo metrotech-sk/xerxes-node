@@ -15,6 +15,10 @@ from xerxes_node.network import Addr, XerxesNetwork
 from xerxes_node import config
 
 
+
+from pymongo import MongoClient
+from pymongo.collection import Collection
+
 my_addr = b"\x00"
 
 def b2i(data: bytes) -> int:
@@ -65,6 +69,12 @@ class AngleLeaf(XerxesLeaf):
         x, y, te1, te2 = struct.unpack("!ffff", pl)
         return [x, y, te1, te2], msgid
 
+class PollutantLeaf(XerxesLeaf):
+    def read(self) -> list:
+        pl, msgid = super().read()
+        pm1, pm2, pm4, pm10, rh, temp, voc, nox = struct.unpack("!ffffffff", pl)
+        return [pm1, pm2, pm4, pm10, rh, temp, voc, nox], msgid
+
 
 def leaf_generator(devId: int, address: int, serial_port: serial.Serial) -> XerxesLeaf:
     #define DEVID_PRESSURE_600MBAR_2TEMP    0x03
@@ -103,22 +113,34 @@ def leaf_generator(devId: int, address: int, serial_port: serial.Serial) -> Xerx
             address=address,
             serial_port=serial_port
             )
-          
+      
 
 if __name__ == "__main__":
     XN = XerxesNetwork(
-        port = config.use_device,
+        port = "/dev/ttyACM0",
     )
     XN.init(
         baudrate=115_200,
-        timeout=config.network_timeout,
+        timeout=config.port_timeout,
         my_addr=0x00
     )
 
     leaves: List[Leaf] = []
     addresses = [Addr(i) for i in range(1, 32)]
-    addresses = [Addr(4)]
+    addresses = [Addr(0x20)]
 
+    sen_pol_leaf = PollutantLeaf(
+        address=0x20,
+        serial_port=XN
+    )
+
+
+    while 1:
+        start = time.perf_counter()
+        rpl = sen_pol_leaf.read()
+        print(rpl, time.perf_counter() - start, "ms")
+
+        time.sleep(1)
     
     while addresses:
         addr = addresses.pop()

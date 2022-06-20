@@ -25,3 +25,6 @@ class Unit:
     
     def __rsub__(self, other):
         return other - self._value
+
+
+class Index(Unit): ...

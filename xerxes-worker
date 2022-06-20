@@ -32,21 +32,21 @@ def home_dir(path):
 def run(collection: Collection, system: XerxesSystem, sample_period: float, log_period: float):
 
     current_period = log_period
-    last_cycle = time.time()
+    last_cycle = time.perf_counter()
 
     while True:
         while system.busy():
             pass
         system.poll()
 
-        cycletime = time.time() - last_cycle
+        cycletime = time.perf_counter() - last_cycle
         try:
             time.sleep(sample_period-cycletime)
         except ValueError:
             log.warning(f"Cycle time {cycletime} is longer than sample period {sample_period}")
 
-        last_cycle = time.time()
         current_period += sample_period
+        last_cycle = time.perf_counter()
         
         if current_period >= log_period:
             current_period = 0
@@ -63,8 +63,7 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
 
             data.update(
                 {
-                    "info": {
-                        "units": "nivelation [mm], inclination[deg °], temp[°C]",
+                    "system_info": {
                         "cpu_temp": get_cpu_temp_celsius()
                     },           
                     "time":{
@@ -97,9 +96,9 @@ if __name__ == "__main__":
     except AttributeError:
         log.error("unable to open systemd journal, using stdout")
         
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG)
-        log.addHandler(handler)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    log.addHandler(handler)
 
     log.info(f"Logger started, log file: {log_filename}")
     

@@ -37,7 +37,6 @@ class LengthLeaf(Leaf):
 
         # convert to sensible units
         return LengthLeafData(
-            addr=self.address,
             length=Length(values[0]),
             temperature_external_1=Celsius(values[1]),
             temperature_external_2=Celsius(values[2])
