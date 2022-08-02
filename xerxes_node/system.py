@@ -3,6 +3,7 @@
 
 from enum import Enum
 import logging
+import sys
 from subprocess import TimeoutExpired
 from threading import Lock
 from threading import Thread
@@ -51,6 +52,7 @@ class XerxesSystem:
                 except TimeoutError:
                     log.warning(f"Leaf {leaf.address} is not responding.")
                 except Exception as e:
+                    tbk = sys.exc_info()[2]
                     log.error(f"Unexpected error: {e}")    
                 
         

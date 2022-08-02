@@ -51,7 +51,6 @@ class PLeaf(Leaf):
 
         # convert to sensible units
         return PLeafData(
-            addr=self.address,
             nivelation=Nivelation(values[0], self.conv_func),  # pressure in 
             temperature_sensor=Celsius(values[1]),
             temperature_external_1=Celsius(values[2]),
