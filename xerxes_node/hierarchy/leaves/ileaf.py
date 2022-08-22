@@ -39,7 +39,6 @@ class ILeaf(Leaf):
 
         # convert to sensible units
         return ILeafData(
-            addr=self.address,
             angle_x=Angle.from_degrees(values[0]),
             angle_y=Angle.from_degrees(values[1]),
             temperature_external_1=Celsius(values[2]),
