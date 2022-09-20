@@ -8,13 +8,11 @@ import time
 from typing import List
 from xerxes_node.ids import DevId, MsgId
 
-from xerxes_node.network import Addr, FutureXerxesNetwork, XerxesMessage, XerxesNetwork
+from xerxes_node.network import Addr, FutureXerxesNetwork, XerxesMessage, XerxesNetwork, NetworkError
 
 import logging
 log = logging.getLogger(__name__)
 
-
-class NetworkError(Exception): ...
 
 
 class EmptyBufferError(Exception): ...
@@ -37,19 +35,7 @@ class Leaf:
 
 
     def ping(self):
-        start = time.perf_counter_ns()
-
-        self.channel.send_msg(
-            destination=self._address.to_bytes(),
-            payload=MsgId.PING.to_bytes()
-        )
-        reply = self.channel.read_msg()
-        if reply.message_id == MsgId.PING_REPLY and reply.destination == self.channel.addr:
-            return (time.perf_counter_ns() - start) /10**9, DevId(struct.unpack("!B", reply.payload)[0])
-        elif reply.message_id != MsgId.PING_REPLY:
-            NetworkError("Invalid reply received ({reply.message_id})")
-        else:
-            NetworkError("Invalid destination address received ({reply.destination})")
+        return self.channel.ping(self._address.to_bytes())
 
 
     def exchange(self, payload: bytes) -> XerxesMessage:

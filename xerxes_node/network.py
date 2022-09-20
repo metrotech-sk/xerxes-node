@@ -4,18 +4,19 @@
 
 from dataclasses import dataclass
 import struct
+import time
 from typing import Union
 import serial
-from xerxes_node.ids import MsgId
+from xerxes_node.ids import DevId, MsgId
 
 
 class ChecksumError(Exception): ...
 
-
 class MessageIncomplete(Exception): ...
 
-
 class LengthError(Exception): ...
+
+class NetworkError(Exception): ...
 
 
 def checksum(message: bytes) -> bytes:
@@ -84,6 +85,13 @@ class FutureXerxesNetwork:
 
 
 class XerxesNetwork: ...
+
+@dataclass
+class XerxesPingReply:
+    devId: DevId
+    vMaj: int
+    vMin: int
+    latency: float
 
 
 class XerxesNetwork:
@@ -218,3 +226,22 @@ class XerxesNetwork:
 
     def sync(self) -> None:
         self.broadcast(payload=MsgId.SYNC.to_bytes())
+        
+    def ping(self, addr: Addr):
+        start = time.monotonic()
+
+        self.send_msg(
+            destination=addr,
+            payload=MsgId.PING.to_bytes()
+        )
+        reply = self.read_msg()
+        if reply.message_id == MsgId.PING_REPLY:
+            rpl = struct.unpack("!BBB", reply.payload)
+            return XerxesPingReply(
+                devId=DevId(rpl[0]),
+                vMaj=int(rpl[1]),
+                vMin=int(rpl[2]),
+                latency=(time.monotonic() - start)
+            )
+        else:
+            NetworkError("Invalid reply received ({reply.message_id})")
