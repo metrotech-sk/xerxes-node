@@ -18,6 +18,7 @@ import struct
 class ILeafData(LeafData):
     angle_x: Angle
     angle_y: Angle
+    temperature_sensor: Celsius
     temperature_external_1: Celsius
     temperature_external_2: Celsius
 
@@ -25,6 +26,7 @@ class ILeafData(LeafData):
 class AverageILeafData:
     angle_x: Angle
     angle_y: Angle
+    temperature_sensor: Celsius
     temperature_external_1: Celsius
     temperature_external_2: Celsius
     invalid: int
@@ -35,14 +37,15 @@ class ILeaf(Leaf):
         reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes())
 
         # unpack 4 uint32_t's
-        values = struct.unpack("!ffff", reply.payload)  # unpack 4 floats: ang_x, ang_y, temp_e1, temp_e2
+        values = struct.unpack("!fffff", reply.payload)  # unpack 4 floats: ang_x, ang_y, temp_e1, temp_e2
 
         # convert to sensible units
         return ILeafData(
             angle_x=Angle.from_degrees(values[0]),
             angle_y=Angle.from_degrees(values[1]),
-            temperature_external_1=Celsius(values[2]),
-            temperature_external_2=Celsius(values[3])
+            temperature_sensor=Celsius(values[2]),
+            temperature_external_1=Celsius(values[3]),
+            temperature_external_2=Celsius(values[4])
         )
         
     
@@ -62,7 +65,7 @@ class ILeaf(Leaf):
         if arrlen<1:
             raise EmptyBufferError("Unable to calculate average from empty list")
         
-        x, y, t1, t2 = [], [], [], []
+        x, y, ts, t1, t2 = ([] for i in range(5))
         for r in readings:
             if is_dataclass(r):
                 x.append(r.angle_x)
@@ -79,6 +82,7 @@ class ILeaf(Leaf):
         return AverageILeafData(
             angle_x=Angle(sum(x)/valid),
             angle_y=Angle(sum(y)/valid),
+            temperature_sensor=Temperature(sum(ts)/valid),
             temperature_external_1=Temperature(sum(t1)/valid),
             temperature_external_2=Temperature(sum(t2)/valid),
             invalid=invalid
@@ -93,6 +97,7 @@ class ILeaf(Leaf):
         to_return = {
             "angle_x": readings.angle_x.degrees,
             "angle_y": readings.angle_y.degrees,
+            "temp_sensor": readings.temperature_sensor.celsius,
             "temp_ext1": readings.temperature_external_1.celsius,
             "temp_ext2": readings.temperature_external_2.celsius,
             "errors": readings.invalid

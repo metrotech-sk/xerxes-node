@@ -118,6 +118,7 @@ if __name__ == "__main__":
     XS = XerxesSystem(
         branches=config.branches,
         mode=Duplex.HALF,
+        network=XN,
         std_timeout_s=config.network_timeout
     )
 

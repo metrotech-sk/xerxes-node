@@ -59,6 +59,9 @@ class Addr(int):
         return int(self)
 
 
+BRAODCAST_ADDR = Addr(0xFF)
+
+
 @dataclass
 class XerxesMessage:
     source: Addr
@@ -209,3 +212,9 @@ class XerxesNetwork:
         msg += payload
         msg += checksum(msg)
         self._s.write(msg)
+
+    def broadcast(self, payload: bytes) -> None:
+        self.send_msg(destination=BRAODCAST_ADDR, payload=payload)
+
+    def sync(self) -> None:
+        self.broadcast(payload=MsgId.SYNC.to_bytes())
