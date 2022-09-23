@@ -47,6 +47,19 @@ class Leaf:
     
     def read(self) -> XerxesMessage:
         return self.exchange(MsgId.FETCH_MEASUREMENT.bytes)
+    
+    
+    def read_reg(self, reg_addr: int, length: int) -> bytes:
+        length = int(length)
+        reg_addr = int(reg_addr)
+        payload = MsgId.READ_REQ.to_bytes() + reg_addr.to_bytes(1, "big") + length.to_bytes(1, "big")
+        return self.exchange(payload)
+    
+    
+    def write_reg(self, reg_addr: int, value: bytes) -> bytes:
+        reg_addr = int(reg_addr)
+        payload = MsgId.SET.to_bytes() + reg_addr.to_bytes(1, "big") + value
+        return self.exchange(payload)
 
 
     def fetch(self):

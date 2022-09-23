@@ -2,13 +2,48 @@
 # -*- coding: utf-8 -*-
 
 from calendar import c
+import struct
 from typing import Callable, Dict, List
 from xerxes_node.hierarchy.leaves.leaf import Leaf
 from xerxes_node.network import NetworkError, XerxesNetwork, Addr, XerxesMessage
 import os
 from rich import print
 
+def get_int(text = ""):
+    inp = None
+    while inp is None:
+        try:
+            inp = int(input(text))
+        except Exception as e:
+            print(e)
+            inp = None
+    return inp
+        
 
+def select_pair(options: Dict):
+    if(len(options.keys()) == 0):
+        print("Nothing to select")
+        return None
+    
+    if len(options.keys()) == 1:
+        print(f"Using: {options[list(options.keys())[0]]}")
+        return options[list(options.keys())[0]]
+    
+    for i in range(len(options.keys())):
+        print(i, list(options.keys())[i])
+        
+    selection = False
+    while not selection:
+        try:
+            key = int(input("Select option #: "))
+            selection = options[list(options.keys())[key]]
+        except IndexError:
+            pass
+        except ValueError:
+            pass
+    return selection
+    
+    
 def select(l: List):
     if(len(l) == 0):
         print("Nothing to select")
@@ -61,7 +96,7 @@ def discover():
         
 
 def sync():
-    xn.sync()
+    print(xn.sync())
     
 
 def fetch_all():
@@ -72,14 +107,52 @@ def fetch_all():
         
 
 def fetch_one():
-    global present
     la = select(present)
-    if la:
-        leaf = Leaf(
-            addr=la, 
-            channel=xn
-        )
-        print(leaf.read())
+    #if la:
+    leaf = Leaf(
+        addr=la, 
+        channel=xn
+    )
+    print(leaf.read())
+        
+def read_reg():
+    la = select(present)
+    leaf = Leaf(
+        addr=la, 
+        channel=xn
+    )
+    regnr = get_int("Register number: ")
+    val_type = select_pair({
+        "uint32": "!I",
+        "int32": "!i",
+        "float": "!f",
+    })
+    val = leaf.read_reg(reg_addr=regnr, length=4)
+    print(f"Reg: {regnr} = {struct.unpack(val_type, val.payload)[0]}")
+    
+
+def write_reg():
+    la = select(present)
+    leaf = Leaf(
+        addr=la, 
+        channel=xn
+    )
+    regnr = get_int("Register number: ")
+    val_type = select_pair({
+        "uint32": "I",
+        "int32": "i",
+        "float": "f",
+    })
+    
+    value = input("Input value: ")
+    try:
+        value = struct.pack(val_type, float(value))
+    except:
+        value = struct.pack(val_type, int(value))
+    val = leaf.write_reg(reg_addr=regnr, value=value)
+    print("Reply: ")
+    print(val)
+    
 
 options = {
     "discover": discover,
@@ -87,7 +160,9 @@ options = {
     "fetch": {
         "all": fetch_all,
         "one": fetch_one
-    }
+    },
+    "read register": read_reg,
+    "write register": write_reg
 }
 
 
