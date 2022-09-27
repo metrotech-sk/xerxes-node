@@ -52,13 +52,13 @@ class Leaf:
     def read_reg(self, reg_addr: int, length: int) -> bytes:
         length = int(length)
         reg_addr = int(reg_addr)
-        payload = MsgId.READ_REQ.to_bytes() + reg_addr.to_bytes(1, "big") + length.to_bytes(1, "big")
+        payload = MsgId.READ_REQ.to_bytes() + reg_addr.to_bytes(1, "little") + length.to_bytes(1, "little")
         return self.exchange(payload)
     
     
     def write_reg(self, reg_addr: int, value: bytes) -> bytes:
         reg_addr = int(reg_addr)
-        payload = MsgId.SET.to_bytes() + reg_addr.to_bytes(1, "big") + value
+        payload = MsgId.SET.to_bytes() + reg_addr.to_bytes(1, "little") + value
         return self.exchange(payload)
 
 

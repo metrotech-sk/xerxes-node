@@ -20,7 +20,7 @@ class InclinationBranch(Branch):
         readings = dict()
         
         for leaf in self._leaves:
-            # try to read all values from leaf and append a average of such values into dictionary
+            # try to read all values from leaf and append a average of such values into dictionary
             try:
                 avg_of_readings = ILeaf.average(
                     readings=leaf.pop_all()
