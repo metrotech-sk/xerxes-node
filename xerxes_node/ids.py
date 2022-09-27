@@ -46,7 +46,11 @@ class Id:
 
 class MsgIdMixin(Id):
     def to_bytes(self):
-        return self._id.to_bytes(2, "big")
+        return self._id.to_bytes(2, "little")
+
+
+    def __bytes__(self) -> bytes:
+        return self._id.to_bytes(2, "little")
 
 
     def __len__(self):
@@ -55,7 +59,7 @@ class MsgIdMixin(Id):
 
 class DevIdMixin(Id):
     def to_bytes(self):
-        return self._id.to_bytes(1, "big")
+        return self._id.to_bytes(1, "little")
 
 
     def __len__(self):
@@ -124,7 +128,7 @@ class MsgId(MsgIdMixin):
 
 
     def __repr__(self):
-        return f"MsgId(0x{self.to_bytes().hex()})"
+        return f"MsgId(0x{self.__bytes__().hex()})"
 
 
     def __str__(self):

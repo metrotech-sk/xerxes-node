@@ -3,7 +3,7 @@
 
 from calendar import c
 import struct
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 from xerxes_node.hierarchy.leaves.leaf import Leaf
 from xerxes_node.network import NetworkError, XerxesNetwork, Addr, XerxesMessage
 import os
@@ -123,11 +123,15 @@ def read_reg():
     )
     regnr = get_int("Register number: ")
     val_type = select_pair({
-        "uint32": "!I",
-        "int32": "!i",
-        "float": "!f",
+        "uint8": "B",
+        "uint32": "I",
+        "int32": "i",
+        "float": "f",
     })
-    val = leaf.read_reg(reg_addr=regnr, length=4)
+    if val_type == "B":
+        val = leaf.read_reg(reg_addr=regnr, length=1)
+    else:
+        val = leaf.read_reg(reg_addr=regnr, length=4)
     print(f"Reg: {regnr} = {struct.unpack(val_type, val.payload)[0]}")
     
 
@@ -139,6 +143,7 @@ def write_reg():
     )
     regnr = get_int("Register number: ")
     val_type = select_pair({
+        "uint8": "B",
         "uint32": "I",
         "int32": "i",
         "float": "f",
@@ -166,7 +171,7 @@ options = {
 }
 
 
-def execute(options: Dict|Callable):
+def execute(options: Union[Dict, Callable]):
     selection = select(list(options.keys()))
     option = options[selection]
     if isinstance(option, dict):

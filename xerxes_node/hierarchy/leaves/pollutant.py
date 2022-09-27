@@ -50,7 +50,7 @@ class PollutantLeaf(Leaf):
         reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes())
 
         # unpack 4 uint32_t's
-        values = struct.unpack("!ffffffff", reply.payload)  # unpack 8 floats: pm1? pm2.5, pm4, pm10, rh, temp, voc, nox
+        values = struct.unpack("ffffffff", reply.payload)  # unpack 8 floats: pm1? pm2.5, pm4, pm10, rh, temp, voc, nox
 
         # convert to sensible units
         return PollutantLeafData(

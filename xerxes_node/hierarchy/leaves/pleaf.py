@@ -47,7 +47,7 @@ class PLeaf(Leaf):
         reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes())
 
         # unpack 4 uint32_t's
-        values = struct.unpack("!ffff", reply.payload)  # unpack 4 floats: presure + 3x temp.
+        values = struct.unpack("ffff", reply.payload)  # unpack 4 floats: presure + 3x temp.
 
         # convert to sensible units
         return PLeafData(

@@ -33,7 +33,7 @@ class LengthLeaf(Leaf):
         reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes())
 
         # unpack 4 uint32_t's
-        values = struct.unpack("!fff", reply.payload)  # unpack 4 floats: ang_x, ang_y, temp_e1, temp_e2
+        values = struct.unpack("ffff", reply.payload)  # unpack 4 floats: ang_x, ang_y, temp_e1, temp_e2
 
         # convert to sensible units
         return LengthLeafData(
