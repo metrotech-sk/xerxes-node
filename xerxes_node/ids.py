@@ -87,7 +87,7 @@ class MsgId(MsgIdMixin):
     
     # Read  up to <LEN> bytes from device register, starting at <REG_ID>
     # The request prototype is <MSGID_READ> <REG_ID> <LEN>           
-    READ                          = MsgIdMixin(0x0201)
+    READ_REQ                      = MsgIdMixin(0x0201)
     READ_VALUE                    = MsgIdMixin(0x0202)
     
     # Pressure value + 2 temperatures
