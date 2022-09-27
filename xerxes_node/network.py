@@ -24,7 +24,7 @@ def checksum(message: bytes) -> bytes:
     summary ^= 0xFF  # get complement of summary
     summary += 1  # get 2's complement
     summary %= 0x100  # get last 8 bits of summary
-    return summary.to_bytes(1, "big")
+    return summary.to_bytes(1, "little")
 
 
 class Addr(int):
@@ -40,7 +40,7 @@ class Addr(int):
 
 
     def to_bytes(self):
-        return int(self).to_bytes(1, "big")
+        return int(self).to_bytes(1, "little")
 
     
     @property
@@ -175,7 +175,7 @@ class XerxesNetwork:
         for i in msg_id_raw:
             checksum += i
 
-        msg_id = struct.unpack("!H", msg_id_raw)[0]
+        msg_id = struct.unpack("H", msg_id_raw)[0]
 
         # read and unpack all data into array, assuming it is uint32_t, big-endian
         raw_msg = bytes(0)
@@ -214,7 +214,7 @@ class XerxesNetwork:
         SOH = b"\x01"
 
         msg = SOH  # SOH
-        msg += (len(payload) + 5).to_bytes(1, "big")  # LEN
+        msg += (len(payload) + 5).to_bytes(1, "little")  # LEN
         msg += self._addr.bytes
         msg += destination.bytes #  DST
         msg += payload
@@ -236,7 +236,7 @@ class XerxesNetwork:
         )
         reply = self.read_msg()
         if reply.message_id == MsgId.PING_REPLY:
-            rpl = struct.unpack("!BBB", reply.payload)
+            rpl = struct.unpack("BBB", reply.payload)
             return XerxesPingReply(
                 devId=DevId(rpl[0]),
                 vMaj=int(rpl[1]),

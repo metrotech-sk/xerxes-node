@@ -36,8 +36,7 @@ class ILeaf(Leaf):
     def read(self) -> ILeafData:
         reply = self.exchange(MsgId.FETCH_MEASUREMENT.to_bytes())
 
-        # unpack 4 uint32_t's
-        values = struct.unpack("!fffff", reply.payload)  # unpack 4 floats: ang_x, ang_y, temp_e1, temp_e2
+        values = struct.unpack("fffff", reply.payload)  # unpack 5 floats: ang_x, ang_y, temp_e1, temp_e2
 
         # convert to sensible units
         return ILeafData(
@@ -70,6 +69,7 @@ class ILeaf(Leaf):
             if is_dataclass(r):
                 x.append(r.angle_x)
                 y.append(r.angle_y)
+                ts.append(r.temperature_sensor)
                 t1.append(r.temperature_external_1)
                 t2.append(r.temperature_external_2)
                 valid += 1

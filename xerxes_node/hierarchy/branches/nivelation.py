@@ -32,7 +32,7 @@ class NivelationBranch(Branch):
         
         for leaf in self._leaves:
             try:
-                # try to read all values from leaf and append a average of such values into dictionary
+                # try to read all values from leaf and append a average of such values into dictionary
                 avg_of_readings = PLeaf.average(
                     readings=leaf.pop_all()
                 )    

@@ -29,7 +29,7 @@ class Branch:
     
     @leaves.setter
     def leaves(self, __o):
-        raise NotImplementedError("you should not acces leaves directly")
+        raise NotImplementedError("you should not access leaves directly")
         
     def __iter__(self):
         self._lv_it = 0
