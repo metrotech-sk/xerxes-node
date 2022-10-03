@@ -4,7 +4,7 @@
 import struct
 from typing import Callable, Dict, List, Union
 from xerxes_protocol.hierarchy.leaves.leaf import Leaf
-from xerxes_protocol.network import NetworkError, XerxesNetwork, Addr, XerxesMessage
+from xerxes_protocol.network import NetworkError, XerxesNetwork, Addr
 from xerxes_protocol.hierarchy.root import XerxesRoot
 import os
 import serial

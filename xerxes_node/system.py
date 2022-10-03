@@ -10,8 +10,10 @@ from threading import Thread
 import time
 from typing import List
 from xerxes_protocol.hierarchy.root import XerxesRoot
+from xerxes_protocol.network import Addr
 from xerxes_protocol.network import ChecksumError, MessageIncomplete
 from xerxes_protocol.hierarchy.leaves.leaf import Leaf
+from xerxes_protocol.hierarchy.leaves.utils import leaf_generator
 from dataclasses import asdict
 from rich import print
 
@@ -78,15 +80,39 @@ class XerxesSystem:
         poller = Thread(target = self._poll)
         poller.start()
 
+
     def busy(self) -> bool:
         return self._access_lock.locked()
         
+
     def wait(self, timeout=-1):
         locked = self._access_lock.acquire(timeout=timeout)
         self._access_lock.release()
         return locked
     
+
     def get_measurements(self):
         _m = self.measurements.copy()
         self.measurements = {}
         return _m
+
+
+    def discover(self, start: int=0, end: int=0xff):
+        self._leaves = []
+        result = dict()
+
+        for i in range(start, end):
+            a = Addr(i)
+            l = Leaf(a, self._root)
+            try:
+                pr = l.ping()
+                self._leaves.append(leaf_generator(l))
+                result[str(int(l.address))] = pr.as_dict()
+            except TimeoutError:
+                pass
+            except Exception as e:
+                log.error(sys.exc_info()[:3])
+
+        return result
+
+

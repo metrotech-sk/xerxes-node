@@ -11,7 +11,6 @@ import sys
 import serial
 from pymongo import MongoClient
 from pymongo.collection import Collection
-from systemd import journal
 from xerxes_protocol.network import XerxesNetwork, Addr
 from xerxes_protocol.hierarchy.root import XerxesRoot
 from xerxes_protocol.hierarchy.leaves.utils import leaf_generator
@@ -37,6 +36,7 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
 
     current_period = log_period
     last_cycle = time.perf_counter()
+    run_count = 0
 
     while True:
         while system.busy():
@@ -64,23 +64,33 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
                 data.update({
                     "measurements": {
                         str(int(leaf.address)): md
-                    }
-                })
-            data.update(
-                {
-                    "system_info": {
-                        "cpu_temp": get_cpu_temp_celsius()
                     },           
                     "time":{
                         "epoch": time.time(),
                         "gm_time": time.asctime(time.gmtime()),
-                    }     
-                }
-            )
+                    }   
+                })
+
 
             new_id = collection.insert_one(data)
             log.info(f"New log pushed: {new_id.inserted_id}")
             log.debug(f"Data: {data}")
+                
+            # every once in a while, rescan the network
+            if run_count % 100 == 0:
+                discover_result = system.discover()
+
+                data = {
+                    "discovery": discover_result,
+                    "system_info": {
+                        "cpu_temp": get_cpu_temp_celsius()
+                    }  
+                }
+                new_id = collection.insert_one(data)
+                log.info(f"New log pushed: {new_id.inserted_id}")
+                log.debug(f"Data: {data}")
+
+            run_count += 1
 
 
 if __name__ == "__main__":
@@ -97,6 +107,7 @@ if __name__ == "__main__":
     )
     
     try:
+        import systemd.journal as journal
         log.addHandler(journal.JournalHandler())    
         gettrace = getattr(sys, 'gettrace', None)
 
@@ -107,7 +118,7 @@ if __name__ == "__main__":
             handler = logging.StreamHandler(sys.stdout)
             handler.setLevel(logging._nameToLevel[config.logging_level])
             log.addHandler(handler)
-    except AttributeError:
+    except (AttributeError, ModuleNotFoundError):
         log.error("unable to open systemd journal, using stdout")
         
         handler = logging.StreamHandler(sys.stdout)
@@ -131,8 +142,8 @@ if __name__ == "__main__":
             leaves.append(dl)
         except TimeoutError:
             pass
-    log.info(f"{len(leaves)} leaves were found on network.")
-    log.warn(leaves)
+    log.warning(f"{len(leaves)} leaves were found on network.")
+    log.info(leaves)
 
     XS = XerxesSystem(
         leaves=leaves,

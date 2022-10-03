@@ -6,7 +6,6 @@ _g = 9.80665
 
 
 class Medium:
-
     @staticmethod
     def ethyleneglycol(Pa):
         return Pa/(_g*1.1132)
