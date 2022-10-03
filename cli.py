@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from calendar import c
 import struct
 from typing import Callable, Dict, List, Union
 from xerxes_protocol.hierarchy.leaves.leaf import Leaf
 from xerxes_protocol.network import NetworkError, XerxesNetwork, Addr, XerxesMessage
+from xerxes_protocol.hierarchy.root import XerxesRoot
 import os
+import serial
 from rich import print
 
 def get_int(text = ""):
@@ -69,10 +70,15 @@ def select(l: List):
 devices = os.popen("ls /dev/|grep -e ttyUSB -e ttyACM").read().split("\n")
 port = select(devices[:-1])
 
-xn = XerxesNetwork(port="/dev/"+port).init(
-    baudrate=115200,
-    timeout=0.05,
-    my_addr=Addr(0xFE)
+xn = XerxesNetwork(
+    port=serial.Serial(
+        port="/dev/"+port,  
+        baudrate=115200,
+        timeout=0.05)).init(
+)
+xr = XerxesRoot(
+    my_addr=Addr(0x1E),
+    network=xn
 )
 
 present = []
@@ -85,7 +91,7 @@ def discover():
     for i in range(start_addr, end_addr):
         ai = Addr(i)
         try:
-            print(xn.ping(ai))
+            print(xr.ping(ai))
             present.append(ai)
         except NetworkError:
             pass
@@ -96,14 +102,14 @@ def discover():
         
 
 def sync():
-    print(xn.sync())
+    print(xr.sync())
     
 
 def fetch_all():
     global present
     for la in present:
-        leaf = Leaf(la, channel=xn)
-        print(leaf.read())
+        leaf = Leaf(la, root=xr)
+        print(leaf.fetch())
         
 
 def fetch_one():
@@ -111,15 +117,16 @@ def fetch_one():
     #if la:
     leaf = Leaf(
         addr=la, 
-        channel=xn
+        root=xr
     )
-    print(leaf.read())
+    print(leaf.fetch())
+        
         
 def read_reg():
     la = select(present)
     leaf = Leaf(
         addr=la, 
-        channel=xn
+        root=xr
     )
     regnr = get_int("Register number: ")
     val_type = select_pair({
@@ -139,7 +146,7 @@ def write_reg():
     la = select(present)
     leaf = Leaf(
         addr=la, 
-        channel=xn
+        root=xr
     )
     regnr = get_int("Register number: ")
     val_type = select_pair({
