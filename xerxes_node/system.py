@@ -35,7 +35,7 @@ class XerxesSystem:
         self._readings = []
         self._leaves = leaves
         self._root = root
-        self.measurements = []
+        self.measurements = {}
 
     def _poll(self):
         
@@ -53,21 +53,21 @@ class XerxesSystem:
         for leaf in self._leaves:
             leaf: Leaf
             try:
-                rply = leaf.fetch()
-                vals = asdict(rply)
-                self.measurements.append(vals)
+                if not self.measurements.get(leaf):
+                    self.measurements[leaf] = []
+                self.measurements.get(leaf).append(leaf.fetch())
+                
             except ChecksumError:
                 log.warning(f"message from leaf {leaf.address} has invalid checksum")
             except MessageIncomplete:
                 log.warning(f"message from leaf {leaf.address} is not complete.")
             except TimeoutError:
                 log.warning(f"Leaf {leaf.address} is not responding.")
-            except Exception as e:
-                tbk = sys.exc_info()[2]
-                log.error(f"Unexpected error: {e}")    
-                log.debug(tbk.tb_lineno)
+            # except Exception as e:
+            #     tbk = sys.exc_info()[2]
+            #     log.error(f"Unexpected error: {e}")    
+            #     log.debug(tbk.tb_lineno)
                 
-        
         # release access lock
         if self._mode == Duplex.HALF:
             self._access_lock.release()
@@ -88,5 +88,5 @@ class XerxesSystem:
     
     def get_measurements(self):
         _m = self.measurements.copy()
-        self.measurements = []
+        self.measurements = {}
         return _m

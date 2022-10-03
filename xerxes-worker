@@ -15,7 +15,7 @@ from systemd import journal
 from xerxes_protocol.network import XerxesNetwork, Addr
 from xerxes_protocol.hierarchy.root import XerxesRoot
 from xerxes_protocol.hierarchy.leaves.utils import leaf_generator
-from xerxes_protocol.hierarchy.leaves.leaf import Leaf
+from xerxes_protocol.hierarchy.leaves.leaf import Leaf, LeafData
 import xerxes_node.config as config
 from xerxes_node.system import Duplex, XerxesSystem
 from xerxes_node.utils import get_cpu_temp_celsius
@@ -57,9 +57,15 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
             
             data = dict()
             
-            data.update({
-                "measurements": system.get_measurements()
-            })
+            m = system.get_measurements()
+            for leaf in m.keys():
+                ma = Leaf.average(m.get(leaf))
+                md = ma._as_dict()
+                data.update({
+                    "measurements": {
+                        str(int(leaf.address)): md
+                    }
+                })
             data.update(
                 {
                     "system_info": {
