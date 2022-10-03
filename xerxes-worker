@@ -2,16 +2,20 @@
 # -*- coding: utf-8 -*-
 
 
-from pprint import pprint as print
+from rich import print
 import os
 import time
 import socket
 import logging
 import sys
+import serial
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from systemd import journal
-from xerxes_node.network import XerxesNetwork
+from xerxes_protocol.network import XerxesNetwork, Addr
+from xerxes_protocol.hierarchy.root import XerxesRoot
+from xerxes_protocol.hierarchy.leaves.utils import leaf_generator
+from xerxes_protocol.hierarchy.leaves.leaf import Leaf
 import xerxes_node.config as config
 from xerxes_node.system import Duplex, XerxesSystem
 from xerxes_node.utils import get_cpu_temp_celsius
@@ -53,14 +57,9 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
             
             data = dict()
             
-            for branch in system.branches:
-                try:
-                    data[branch.name] = branch.to_dict()
-                except NotImplementedError:
-                    log.error("Branch is not implemented")
-                except KeyError as e:
-                    log.error(f"Accessing unawailable node. Details: {e}")
-
+            data.update({
+                "measurements": system.get_measurements()
+            })
             data.update(
                 {
                     "system_info": {
@@ -92,7 +91,16 @@ if __name__ == "__main__":
     )
     
     try:
-        log.addHandler(journal.JournalHandler())
+        log.addHandler(journal.JournalHandler())    
+        gettrace = getattr(sys, 'gettrace', None)
+
+        if gettrace is None:
+            print('No sys.gettrace')
+        elif gettrace():
+            # debugging, attach to stdout too 
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(logging._nameToLevel[config.logging_level])
+            log.addHandler(handler)
     except AttributeError:
         log.error("unable to open systemd journal, using stdout")
         
@@ -102,24 +110,29 @@ if __name__ == "__main__":
 
     log.info(f"Logger started, log file: {log_filename}")
     
-    XN = XerxesNetwork(
-        port = config.use_device
-    ).init(
-        baudrate=115_200,
-        timeout=config.port_timeout,
-        my_addr=0x00
-    )
+    XN = XerxesNetwork(serial.Serial(
+        port=config.use_device,
+        baudrate=115200,
+        timeout=config.port_timeout
+        )).init()
+    XR = XerxesRoot(Addr(0), XN)
 
-    # for each sensor, use communicaiton channel XN
-    for branch in config.branches:
-        for leaf in branch.leaves:
-            leaf.assign_channel(XN)
+    leaves = []
+    for i in range(0xFF):
+        tl = Leaf(Addr(i), XR)
+        try:
+            dl = leaf_generator(tl)
+            leaves.append(dl)
+        except TimeoutError:
+            pass
+    log.info(f"{len(leaves)} leaves were found on network.")
+    log.warn(leaves)
 
     XS = XerxesSystem(
-        branches=config.branches,
+        leaves=leaves,
         mode=Duplex.HALF,
-        network=XN,
-        std_timeout_s=config.network_timeout
+        root=XR,
+        std_timeout_s=config.network_timeout,
     )
 
     shard = MongoClient(config.mongo_URI)

@@ -9,8 +9,12 @@ from threading import Lock
 from threading import Thread
 import time
 from typing import List
-from xerxes_node.hierarchy.branches.branch import Branch
-from xerxes_node.network import ChecksumError, LengthError, MessageIncomplete, XerxesNetwork
+from xerxes_protocol.hierarchy.root import XerxesRoot
+from xerxes_protocol.network import ChecksumError, MessageIncomplete
+from xerxes_protocol.hierarchy.leaves.leaf import Leaf
+from dataclasses import asdict
+from rich import print
+
 log = logging.getLogger(__name__)
 
 class NetworkBusy(Exception):
@@ -23,16 +27,15 @@ class Duplex(Enum):
 
 
 class XerxesSystem:
-    def __init__(self, branches: List[Branch], mode: Duplex, network: XerxesNetwork, std_timeout_s=-1):
-        self._branches = branches
+    def __init__(self, leaves: List[Leaf], mode: Duplex, root: XerxesRoot, std_timeout_s=-1):
+        
         self._mode = mode
         self._access_lock = Lock()
         self._std_timeout_s = std_timeout_s
         self._readings = []
-        self._network = network
-
-    def append_branch(self, branch: Branch):
-        self._branches.append(branch)
+        self._leaves = leaves
+        self._root = root
+        self.measurements = []
 
     def _poll(self):
         
@@ -44,23 +47,25 @@ class XerxesSystem:
                 raise TimeoutExpired("unable to access network within timeout")
 
         # sync sensors 
-        self._network.sync()
+        self._root.sync()
         time.sleep(0.2) # wait for sensors to acquire measurement
 
-        for branch in self._branches:
-            for leaf in branch:
-                try:
-                    leaf.fetch()
-                except ChecksumError:
-                    log.warning(f"message from leaf {leaf.address} has invalid checksum")
-                except MessageIncomplete:
-                    log.warning(f"message from leaf {leaf.address} is not complete.")
-                except TimeoutError:
-                    log.warning(f"Leaf {leaf.address} is not responding.")
-                except Exception as e:
-                    tbk = sys.exc_info()[2]
-                    log.error(f"Unexpected error: {e}")    
-                    log.debug(tbk)
+        for leaf in self._leaves:
+            leaf: Leaf
+            try:
+                rply = leaf.fetch()
+                vals = asdict(rply)
+                self.measurements.append(vals)
+            except ChecksumError:
+                log.warning(f"message from leaf {leaf.address} has invalid checksum")
+            except MessageIncomplete:
+                log.warning(f"message from leaf {leaf.address} is not complete.")
+            except TimeoutError:
+                log.warning(f"Leaf {leaf.address} is not responding.")
+            except Exception as e:
+                tbk = sys.exc_info()[2]
+                log.error(f"Unexpected error: {e}")    
+                log.debug(tbk.tb_lineno)
                 
         
         # release access lock
@@ -81,10 +86,7 @@ class XerxesSystem:
         self._access_lock.release()
         return locked
     
-    @property
-    def branches(self) -> List[Branch]:
-        return list(self._branches)
-    
-    @branches.setter
-    def branches(self, __b):
-        raise NotImplementedError
+    def get_measurements(self):
+        _m = self.measurements.copy()
+        self.measurements = []
+        return _m

@@ -4,8 +4,8 @@
 from calendar import c
 import struct
 from typing import Callable, Dict, List, Union
-from xerxes_node.hierarchy.leaves.leaf import Leaf
-from xerxes_node.network import NetworkError, XerxesNetwork, Addr, XerxesMessage
+from xerxes_protocol.hierarchy.leaves.leaf import Leaf
+from xerxes_protocol.network import NetworkError, XerxesNetwork, Addr, XerxesMessage
 import os
 from rich import print
 

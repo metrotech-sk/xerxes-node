@@ -8,3 +8,4 @@ rich==12.5.1
 systemd==0.16.1
 systemd-python==234
 typing-extensions==4.3.0
+xerxes-protocol
