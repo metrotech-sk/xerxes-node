@@ -45,7 +45,7 @@ class XerxesSystem:
 
         # sync sensors 
         self._network.sync()
-        time.sleep(0.1) # wait for sensors to acquire measurement
+        time.sleep(0.2) # wait for sensors to acquire measurement
 
         for branch in self._branches:
             for leaf in branch:
@@ -60,6 +60,7 @@ class XerxesSystem:
                 except Exception as e:
                     tbk = sys.exc_info()[2]
                     log.error(f"Unexpected error: {e}")    
+                    log.debug(tbk)
                 
         
         # release access lock
