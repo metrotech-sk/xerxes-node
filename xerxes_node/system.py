@@ -29,54 +29,56 @@ class Duplex(Enum):
 
 
 class XerxesSystem:
-    def __init__(self, leaves: List[Leaf], mode: Duplex, root: XerxesRoot, std_timeout_s=-1):
+    def __init__(self, mode: Duplex, root: XerxesRoot, std_timeout_s=-1):
         
         self._mode = mode
         self._access_lock = Lock()
         self._std_timeout_s = std_timeout_s
         self._readings = []
-        self._leaves = leaves
+        self._leaves = []
         self._root = root
         self.measurements = {}
 
     def _poll(self):
-        
+        time_start_brut = time.monotonic()
         # if network is read/write exclusive:
         if self._mode == Duplex.HALF:
             lock_acq = self._access_lock.acquire(blocking=True, timeout=self._std_timeout_s)
             if not lock_acq:
-                log.warning("trying to access busy network")
-                raise TimeoutExpired("unable to access network within timeout")
-
+                log.warning("Trying to access busy network within timeout. Exitting.")
+                raise NetworkBusy("unable to access network within timeout")
+       
+        time_start_net = time.monotonic()
+        
         # sync sensors 
         self._root.sync()
-        time.sleep(0.2) # wait for sensors to acquire measurement
+        time.sleep(0.15) # wait for sensors to acquire measurement
 
         for leaf in self._leaves:
-            leaf: Leaf
+            if not self.measurements.get(leaf):
+                self.measurements[leaf] = []
             try:
-                if not self.measurements.get(leaf):
-                    self.measurements[leaf] = []
-                self.measurements.get(leaf).append(leaf.fetch())
-                
+                time_leaf = time.monotonic()
+                measurement = leaf.fetch()
+                self.measurements.get(leaf).append(measurement)
+                log.debug(f"Leaf: {leaf.address}, time: {time.monotonic() - time_leaf}, {measurement}")
             except ChecksumError:
                 log.warning(f"message from leaf {leaf.address} has invalid checksum")
             except MessageIncomplete:
                 log.warning(f"message from leaf {leaf.address} is not complete.")
             except TimeoutError:
                 log.warning(f"Leaf {leaf.address} is not responding.")
-            # except Exception as e:
-            #     tbk = sys.exc_info()[2]
-            #     log.error(f"Unexpected error: {e}")    
-            #     log.debug(tbk.tb_lineno)
+            except Exception as e:
+                tbk = sys.exc_info()[:3]
+                log.error(f"Unexpected error: {e}")    
+                log.debug(tbk)
                 
         # release access lock
         if self._mode == Duplex.HALF:
             self._access_lock.release()
+        log.debug(f"sampled in {time.monotonic() - time_start_brut}, net time: {time.monotonic() - time_start_net}")
 
     def poll(self) -> None:
-        if self._access_lock.locked() and self._mode == Duplex.HALF:
-           raise NetworkBusy("Previous command is still in progress")
         poller = Thread(target = self._poll)
         poller.start()
 
@@ -106,7 +108,10 @@ class XerxesSystem:
             l = Leaf(a, self._root)
             try:
                 pr = l.ping()
-                self._leaves.append(leaf_generator(l))
+                new_leaf = leaf_generator(l)
+                self._leaves.append(new_leaf)
+                log.info(pr)
+                log.info(new_leaf)
                 result[str(int(l.address))] = pr.as_dict()
             except TimeoutError:
                 pass
