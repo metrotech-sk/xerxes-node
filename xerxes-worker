@@ -32,6 +32,15 @@ def home_dir(path):
     return os.path.join(os.path.expanduser("~"), path)
 
 
+def timestamp(data: dict) -> dict:
+    data.update({    
+        "time":{
+            "epoch": time.time(),
+            "gm_time": time.asctime(time.gmtime()),
+        }   
+    })
+
+
 def run(collection: Collection, system: XerxesSystem, sample_period: float, log_period: float):
 
     current_period = log_period
@@ -71,12 +80,7 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
                 data["measurements"].update({
                     str(int(leaf.address)): md
                 })
-            data.update({    
-                "time":{
-                    "epoch": time.time(),
-                    "gm_time": time.asctime(time.gmtime()),
-                }   
-            })
+            timestamp(data)
 
             new_id = collection.insert_one(data)
             log.info(f"New log pushed: {new_id.inserted_id}")
@@ -92,6 +96,7 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
                         "cpu_temp": get_cpu_temp_celsius()
                     }  
                 }
+                timestamp(data)
                 new_id = collection.insert_one(data)
                 log.info(f"New log pushed: {new_id.inserted_id}")
                 log.debug(f"Data: {data}")
@@ -108,7 +113,7 @@ if __name__ == "__main__":
     logging.basicConfig(
         format='%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
         datefmt='%m/%d/%Y %I:%M:%S %p',
-        filename=log_filename, 
+        #filename=log_filename, 
         level=logging._nameToLevel[config.logging_level]
     )
     
