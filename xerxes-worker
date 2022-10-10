@@ -39,8 +39,8 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
     run_count = 1
 
     while True:
-        while system.busy():
-            pass
+        while not system.wait(1):
+            log.info("Xerxes system is busy...")
         system.poll()
 
         cycletime = time.perf_counter() - last_cycle
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         log.addHandler(handler)
 
     log.info(f"Logger started, log file: {log_filename}")
-    log.info("Starting network.")
+    log.warning("Starting network.")
     
     XN = XerxesNetwork(serial.Serial(
         port=config.use_device
@@ -143,18 +143,19 @@ if __name__ == "__main__":
     log.info(XN)
     log.info("Creating root (master)")
     XR = XerxesRoot(Addr(0), XN)
-    log.info("Master created")
+    log.warning("Master created")
     log.info(str(XR))
 
-    log.info("Creating node system")
+    log.warning("Creating node system")
     XS = XerxesSystem(
         mode=Duplex.HALF,
         root=XR,
         std_timeout_s=config.network_timeout,
     )
     log.info("System created.")
-    log.info("Discovering leaves on network...")
+    log.warning("Discovering leaves on network...")
     log.info(XS.discover())
+    log.warning([i.address for i in XS._leaves])
     
     log.info("Connecting to database...")
     shard = MongoClient(config.mongo_URI)
