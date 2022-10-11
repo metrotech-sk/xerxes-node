@@ -81,6 +81,9 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
                     str(int(leaf.address)): md
                 })
             timestamp(data)
+            data.update({
+                "errors": system.get_errors()
+            })
 
             new_id = collection.insert_one(data)
             log.info(f"New log pushed: {new_id.inserted_id}")

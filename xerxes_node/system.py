@@ -39,6 +39,7 @@ class XerxesSystem:
         self._readings = []
         self._leaves = []
         self._root = root
+        self._errors = 0
         self.measurements = {}
 
 
@@ -59,6 +60,7 @@ class XerxesSystem:
             time.sleep(0.15) # wait for sensors to acquire measurement
 
             for leaf in self._leaves:
+                leaf: Leaf
                 if not self.measurements.get(leaf):
                     self.measurements[leaf] = []
                 try:
@@ -67,12 +69,16 @@ class XerxesSystem:
                     self.measurements.get(leaf).append(measurement)
                     log.debug(f"Leaf: {leaf.address}, time: {time.monotonic() - time_leaf}, {measurement}")
                 except ChecksumError:
+                    self._errors += 1
                     log.warning(f"message from leaf {leaf.address} has invalid checksum")
                 except MessageIncomplete:
+                    self._errors += 1
                     log.warning(f"message from leaf {leaf.address} is not complete.")
                 except TimeoutError:
+                    self._errors += 1
                     log.warning(f"Leaf {leaf.address} is not responding.")
                 except Exception as e:
+                    self._errors += 1
                     tbk = sys.exc_info()[:3]
                     log.error(f"Unexpected error: {e}")    
                     log.debug(tbk)
@@ -90,19 +96,25 @@ class XerxesSystem:
         poller.start()
         
 
-    def wait(self, timeout=-1):
+    def wait(self, timeout=-1) -> bool:
         locked = self._access_lock.acquire(timeout=timeout)
         self._access_lock.release()
         return locked
     
 
-    def get_measurements(self):
+    def get_measurements(self) -> dict:
         _m = self.measurements.copy()
         self.measurements = {}
         return _m
 
 
-    def discover(self, start: int=0, end: int=0xff):
+    def get_errors(self) -> int:
+        e: int = self._errors
+        self._errors = 0
+        return e
+
+
+    def discover(self, start: int=0, end: int=0xff) -> dict:
         result = dict()
 
         for i in range(start, end):
