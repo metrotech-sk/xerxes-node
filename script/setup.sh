@@ -5,7 +5,7 @@
 
 udev_rules_file='/etc/udev/rules.d/50-custom.rules'
 
-xerxes_user='stanke'
+xerxes_user='xerxes'
 git_branch='devel'
 
 
@@ -36,10 +36,6 @@ zerotier join a0cbf4b62a6c2b69
 # change hostname to match zerotier id
 hostnamectl set-hostname $(sudo zerotier info|cut -d" " -f3)
 
-echo "Disabling UART CMDline..."
-# TODO (@theMladyPan) - toto si zaslúži spraviť lepšie
-echo "net.ifnames=0 dwc_otg.lpm_enable=0 root=LABEL=writable rootfstype=ext4 elevator=deadline rootwait fixrtc"|tee /boot/firmware/cmdline.txt
-
 echo "#######################################################"
 echo "ADDING NEW USER, $xerxes_user"
 adduser --gecos "" $xerxes_user
@@ -51,7 +47,6 @@ usermod -a -G spiuser $xerxes_user
 usermod -aG dialout $xerxes_user
 
 cd /home/$xerxes_user
-
 
 # clone repo
 echo "cloning xerxes repository..."
@@ -71,6 +66,8 @@ systemctl enable xerxes-node.service
 echo "Installing Udev rules..."
 cp script/50-custom.rules /etc/udev/rules.d/
 chown root:root $udev_rules_file
+udevadm control --reload-rules
+udevadm trigger
 
 echo "creating virtual environment..."
 python3 -m venv ./venv
@@ -80,4 +77,5 @@ venv/bin/python -m pip install -r requirements.txt
 spd-say "Installation complete!"
 
 echo "Done! rebooting in 60 seconds..."
-sleep 60&&reboot now
+sleep 60
+reboot now

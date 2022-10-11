@@ -5,7 +5,7 @@ start() {
     # code to start app comes here 
     # example: daemon program_name &
     # TODO (@theMladyPan) toto prerobiť na relatívne cesty
-    /home/stanke/xerxes-node/venv/bin/python /home/stanke/xerxes-node/xerxes-worker
+    /home/xerxes/xerxes-node/venv/bin/python /home/xerxes/xerxes-node/xerxes-worker
 }
 
 stop() {

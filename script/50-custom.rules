@@ -1,4 +1,1 @@
-KERNEL=="spidev*", GROUP="spiuser", MODE="0660"
-KERNEL=="mem", OWNER="root", GROUP="spiuser"
-KERNEL=="gpiomem", OWNER="root", GROUP="spiuser"
-KERNEL=="tty[A-Z]*[0-9]|pppox[0-9]*|ircomm[0-9]*|noz[0-9]*|rfcomm[0-9]*", GROUP="spiuser"
+KERNEL=="tty[A-Z]*[0-9]|pppox[0-9]*|ircomm[0-9]*|noz[0-9]*|rfcomm[0-9]*", GROUP="dialout"
