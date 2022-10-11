@@ -111,30 +111,12 @@ if __name__ == "__main__":
     
     log = logging.getLogger()
     logging.basicConfig(
-        format='%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
-        datefmt='%m/%d/%Y %I:%M:%S %p',
-        #filename=log_filename, 
+        format="%(levelname)s: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
+        # datefmt='%m/%d/%Y %I:%M:%S %p',
+        # filename=log_filename, 
         level=logging._nameToLevel[config.logging_level]
     )
     
-    try:
-        import systemd.journal as journal
-        log.addHandler(journal.JournalHandler())    
-        gettrace = getattr(sys, 'gettrace', None)
-
-        if gettrace is None:
-            print('No sys.gettrace')
-        elif gettrace():
-            # debugging, attach to stdout too 
-            handler = logging.StreamHandler(sys.stdout)
-            handler.setLevel(logging._nameToLevel[config.logging_level])
-            log.addHandler(handler)
-    except (AttributeError, ModuleNotFoundError):
-        log.error("unable to open systemd journal, using stdout")
-        
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging._nameToLevel[config.logging_level])
-        log.addHandler(handler)
 
     log.info(f"Logger started, log file: {log_filename}")
     log.warning("Starting network.")
