@@ -8,6 +8,7 @@ from xerxes_protocol.network import NetworkError, XerxesNetwork, Addr
 from xerxes_protocol.hierarchy.root import XerxesRoot
 import os
 import serial
+import time
 from rich import print
 
 def get_int(text = ""):
@@ -57,8 +58,8 @@ def select(l: List):
     for i in range(len(l)):
         print(i, l[i])
     
-    selection = False
-    while not selection:
+    selection = None
+    while selection is None:
         try:
             selection = l[int(input("Select option #: "))]
         except IndexError:
@@ -74,10 +75,10 @@ xn = XerxesNetwork(
     port=serial.Serial(
         port="/dev/"+port,  
         baudrate=115200,
-        timeout=0.05)).init(
+        timeout=0.01)).init(
 )
 xr = XerxesRoot(
-    my_addr=Addr(0x1E),
+    my_addr=Addr(0xFE),
     network=xn
 )
 
@@ -164,6 +165,16 @@ def write_reg():
     val = leaf.write_reg(reg_addr=regnr, value=value)
     print("Reply: ")
     print(val)
+
+def reset_dev():
+    la = select(present)
+    leaf = Leaf(
+        addr=la, 
+        root=xr
+    )
+    leaf.reset_soft()
+    time.sleep(.1)
+    print(f"Leaf {leaf} restarted")
     
 
 options = {
@@ -174,7 +185,8 @@ options = {
         "one": fetch_one
     },
     "read register": read_reg,
-    "write register": write_reg
+    "write register": write_reg,
+    "reset": reset_dev
 }
 
 
