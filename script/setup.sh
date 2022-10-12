@@ -69,6 +69,9 @@ chown root:root $udev_rules_file
 udevadm control --reload-rules
 udevadm trigger
 
+echo "Lowering latency of USB/Serial device 15  > 1ms"
+echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer
+
 echo "creating virtual environment..."
 python3 -m venv ./venv
 echo "installing and building dependencies, this may take several hours"
