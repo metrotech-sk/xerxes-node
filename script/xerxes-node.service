@@ -7,8 +7,8 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=10
-User=xerxes
-ExecStart=/home/xerxes/xerxes-node/script/xerxes-node.sh start
+User=stanke
+ExecStart=/home/stanke/xerxes-node/script/xerxes-node.sh start
 
 [Install]
 WantedBy=multi-user.target

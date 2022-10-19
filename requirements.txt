@@ -9,3 +9,5 @@ typing-extensions==4.3.0
 xerxes-protocol
 #systemd==0.16.1
 #systemd-python==234
+flask
+gunicorn

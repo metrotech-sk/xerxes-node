@@ -32,3 +32,22 @@ network:
 ssh-copy-id -i ~/.ssh/id_rsa.pub YOUR_USER_NAME@IP_ADDRESS_OF_THE_SERVER
 ```
 
+## run gunicorn on port 80
+You can use authbind to achieve this. Install authbind
+
+`sudo apt-get install authbind`
+
+Then use auth bind to modify port 80 to make sure that port 80 can be used by non-superusers (aka without superuser privileges). Here are the three commands you can use to achieve this.
+
+```shell
+sudo touch /etc/authbind/byport/80
+sudo chmod 500 /etc/authbind/byport/80
+sudo chown USER /etc/authbind/byport/80
+```
+USER - can be any user on your system like bhatman or ubuntu or ec2-user.
+
+NOTE: just change 80 to any desired port and it will work for any port. Use this responsibly my friend. :)
+
+Now your gunicorn command will look something like this:
+
+`authbind gunicorn -c gunicorn.conf wsgi:app`
