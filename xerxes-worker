@@ -132,7 +132,7 @@ if __name__ == "__main__":
     )
     log.info(XN)
     log.info("Creating root (master)")
-    XR = XerxesRoot(Addr(0), XN)
+    XR = XerxesRoot(Addr(0xfe), XN)
     log.warning("Master created")
     log.info(str(XR))
 
