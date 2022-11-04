@@ -50,7 +50,7 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
     while True:
         while not system.wait(1):
             log.info("Xerxes system is busy...")
-        system.poll()
+        system.poll(blocking=True)
 
         cycletime = time.perf_counter() - last_cycle
         try:

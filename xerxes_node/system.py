@@ -8,7 +8,7 @@ from subprocess import TimeoutExpired
 from threading import Lock
 from threading import Thread
 import time
-from typing import List
+from typing import List, Union
 from xerxes_protocol.hierarchy.root import XerxesRoot
 from xerxes_protocol.network import Addr
 from xerxes_protocol.network import ChecksumError, MessageIncomplete
@@ -45,7 +45,7 @@ class XerxesSystem:
 
     def _poll(self):
         try:
-            time_start_brut = time.monotonic()
+            time_start_brut = time.perf_counter()
             # if network is read/write exclusive:
             if self._mode == Duplex.HALF:
                 lock_acq = self._access_lock.acquire(blocking=True, timeout=self._std_timeout_s)
@@ -53,7 +53,7 @@ class XerxesSystem:
                     log.warning("Trying to access busy network within timeout. Exitting.")
                     raise NetworkBusy("unable to access network within timeout")
         
-            time_start_net = time.monotonic()
+            time_start_net = time.perf_counter()
             
             # sync sensors 
             self._root.sync()
@@ -64,10 +64,10 @@ class XerxesSystem:
                 if not self.measurements.get(leaf):
                     self.measurements[leaf] = []
                 try:
-                    time_leaf = time.monotonic()
+                    time_leaf = time.perf_counter()
                     measurement = leaf.fetch()
                     self.measurements.get(leaf).append(measurement)
-                    log.debug(f"Leaf: {leaf.address}, time: {time.monotonic() - time_leaf}, {measurement}")
+                    log.debug(f"Leaf: {leaf.address}, time: {time.perf_counter() - time_leaf}, {measurement}")
                 except ChecksumError:
                     self._errors += 1
                     log.warning(f"message from leaf {leaf.address} has invalid checksum")
@@ -83,7 +83,7 @@ class XerxesSystem:
                     log.error(f"Unexpected error: {e}")    
                     log.debug(tbk)
                     
-            log.debug(f"sampled in {time.monotonic() - time_start_brut}, net time: {time.monotonic() - time_start_net}")
+            log.debug(f"sampled in {time.perf_counter() - time_start_brut}, net time: {time.perf_counter() - time_start_net}")
 
         finally:
             # release access lock
@@ -91,9 +91,13 @@ class XerxesSystem:
                 self._access_lock.release()
 
 
-    def poll(self) -> None:
-        poller = Thread(target = self._poll)
-        poller.start()
+    def poll(self, blocking: bool=True) -> Union[None, Thread]:
+        if blocking:
+            self._poll()
+        else:
+            poller = Thread(target = self._poll)
+            poller.start()
+            return poller
         
 
     def wait(self, timeout=-1) -> bool:
