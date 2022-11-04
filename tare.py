@@ -17,12 +17,12 @@ from xerxes_protocol.hierarchy.leaves.utils import leaf_generator
 from xerxes_protocol.hierarchy.leaves.leaf import Leaf, LeafData
 from xerxes_protocol.hierarchy.leaves.pressure import PLeaf, PLeafData
 
-import xerxes_node.config as config
+from xerxes_node import config
 from xerxes_node.system import Duplex, XerxesSystem
 from xerxes_node.utils import get_cpu_temp_celsius
 
 
-def tare_pleaf(leaf: PLeaf):
+def tare_pleaf(leaf: PLeaf) -> bool:
     leaf.write_param("offset", 0)
     leaf.reset_soft()
     time.sleep(.2)
@@ -36,61 +36,46 @@ def tare_pleaf(leaf: PLeaf):
     pressures.sort()
     
     avg_p = sum(pressures[10:-10]) / (len(pressures)-20)
-    log.info(f">>> Ambient pressure {leaf.address} (no connection): {avg_p}")
+    print(f">>> Ambient pressure {leaf.address} (no connection): {avg_p}")
     
     if avg_p != 0:
-        log.info("Writing to register: offset...")
+        print("Writing to register: offset ...")
         leaf.write_param("offset", -avg_p)
         leaf.reset_soft()
         time.sleep(.01)
+        return True
+    
+    return False
 
 
-def tare_leaf(leaf: Leaf):
+def tare_leaf(leaf: Leaf) -> bool:
     if isinstance(leaf, PLeaf):
-        tare_pleaf(leaf)
+        return tare_pleaf(leaf)
     else:
-        pass
+        return False
 
 
 if __name__ == "__main__":
-    
-    print("creating logger")
-    log_filename = "/tmp/xerxes.log"
-    
-    log = logging.getLogger()
-    logging.basicConfig(
-        format="%(levelname)s: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
-        # datefmt='%m/%d/%Y %I:%M:%S %p',
-        # filename=log_filename, 
-        level=logging._nameToLevel[config.logging_level]
-    )
-    
-
-    log.info(f"Logger started, log file: {log_filename}")
-    log.warning("Starting network.")
-    
     XN = XerxesNetwork(serial.Serial(
         port=config.use_device
     )).init(
         baudrate=115200,
         timeout=config.port_timeout
     )
-    log.info(XN)
-    log.info("Creating root (master)")
+    
     XR = XerxesRoot(Addr(0xfe), XN)
-    log.warning("Master created")
-    log.info(str(XR))
-
-    log.warning("Creating node system")
+    
     XS = XerxesSystem(
         mode=Duplex.HALF,
         root=XR,
         std_timeout_s=config.network_timeout,
     )
     
+    print("Discovering leaves on network...")
+    print(XS.discover())
     
-    log.warning("Discovering leaves on network...")
-    log.info(XS.discover())
-    
+    affected = 0
     for leaf in XS._leaves:
-        tare_leaf(leaf)
+        if tare_leaf(leaf): affected += 1
+    
+    print(f" ############### TARING FINISHED! {affected} leaves affected. ############### ")
