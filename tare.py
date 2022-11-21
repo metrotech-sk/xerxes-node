@@ -125,7 +125,7 @@ def tare_leaves(leaves: List[Leaf], addr_range: Optional[List] = None) -> int:
                 affected += tare_ileaf(leaf)
                 
             elif isinstance(leaf, SLeaf):
-                affected += tare_sleaf
+                affected += tare_sleaf(leaf)
             
     # return the number of affected adresses
     return affected
