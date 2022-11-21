@@ -75,7 +75,7 @@ xn = XerxesNetwork(
     port=serial.Serial(
         port="/dev/"+port,  
         baudrate=115200,
-        timeout=0.01)).init(
+        timeout=0.02)).init(
 )
 xr = XerxesRoot(
     my_addr=Addr(0xFE),
@@ -94,6 +94,7 @@ def discover():
         try:
             print(xr.ping(ai))
             present.append(ai)
+            time.sleep(.01)
         except NetworkError:
             pass
         except TimeoutError:
@@ -199,9 +200,11 @@ def execute(options: Union[Dict, Callable]):
     elif callable(option):
         option()
         
-
-while 1:
-    try:
-        execute(options)
-    except Exception as e:
-        print(e)
+if __name__ == "__main__":
+    while 1:
+        try:
+            execute(options)
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(e)
