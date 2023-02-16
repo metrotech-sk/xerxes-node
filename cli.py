@@ -94,14 +94,17 @@ def discover():
         try:
             print(xr.ping(ai))
             present.append(ai)
-            time.sleep(.01)
         except NetworkError:
             pass
         except TimeoutError:
             pass
-    
-    print("Adresses on bus: ", present)
-        
+        except Exception as e:
+            print(f"Addr: {ai}, error: {e}")
+            
+        time.sleep(.1)
+
+    print(f"{len(present)} Adresses on bus: {present}")
+
 
 def sync():
     print(xr.sync())

@@ -18,6 +18,7 @@ from xerxes_protocol.hierarchy.leaves.leaf import Leaf, LeafData
 import xerxes_node.config as config
 from xerxes_node.system import Duplex, XerxesSystem
 from xerxes_node.utils import get_cpu_temp_celsius
+from typing import List
 
 
 file_path = os.path.realpath(__file__)
@@ -41,16 +42,18 @@ def timestamp(data: dict) -> dict:
     })
 
 
-def run(collection: Collection, system: XerxesSystem, sample_period: float, log_period: float):
+def run(collection: Collection, systems: List[XerxesSystem], sample_period: float, log_period: float):
 
     current_period = log_period
     last_cycle = time.perf_counter()
     run_count = 1
 
     while True:
-        while not system.wait(1):
-            log.info("Xerxes system is busy...")
-        system.poll(blocking=True)
+        for system in systems:
+            if system:
+                while not system.wait(1):
+                    log.info("Xerxes system is busy...")
+                system.poll(blocking=True)
 
         cycletime = time.perf_counter() - last_cycle
         try:
@@ -71,19 +74,24 @@ def run(collection: Collection, system: XerxesSystem, sample_period: float, log_
             data = {
                 "measurements": {}
             }
+            for system in systems:
+                if system:
+                    m = system.get_measurements()
+                    for leaf in m.keys():
+                        try:
+                            ma = Leaf.average(m.get(leaf))
+                            md = ma._as_dict()
+                            
+                            data["measurements"].update({
+                                str(int(leaf.address)): md
+                            })
+                        except IndexError as e:
+                            log.error(f"Error scanning leaf {leaf}, {e}")
+                    data.update({
+                        "errors": system.get_errors()
+                    })
             
-            m = system.get_measurements()
-            for leaf in m.keys():
-                ma = Leaf.average(m.get(leaf))
-                md = ma._as_dict()
-                
-                data["measurements"].update({
-                    str(int(leaf.address)): md
-                })
             timestamp(data)
-            data.update({
-                "errors": system.get_errors()
-            })
 
             new_id = collection.insert_one(data)
             log.info(f"New log pushed: {new_id.inserted_id}")
@@ -130,9 +138,26 @@ if __name__ == "__main__":
         baudrate=115200,
         timeout=config.port_timeout
     )
+    XN2 = False
+    try:
+        XN2 = XerxesNetwork(serial.Serial(
+            port=config.use_device2
+        )).init(
+            baudrate=115200,
+            timeout=config.port_timeout
+        )
+    except:
+        pass
+
     log.info(XN)
+    if XN2: log.info(XN2)
     log.info("Creating root (master)")
+
     XR = XerxesRoot(Addr(0xfe), XN)
+    if XN2: 
+        XR2 = XerxesRoot(Addr(0xfe), XN2)
+    else:
+        XR2 = False
     log.warning("Master created")
     log.info(str(XR))
 
@@ -142,10 +167,23 @@ if __name__ == "__main__":
         root=XR,
         std_timeout_s=config.network_timeout,
     )
+    if XN2:
+        XS2 = XerxesSystem(
+            mode=Duplex.HALF,
+            root=XR2,
+            std_timeout_s=config.network_timeout,
+        )    
+    else:
+        XS2 = False
     log.info("System created.")
-    log.warning("Discovering leaves on network...")
+    log.warning(f"Discovering leaves on network {XN}")
     log.info(XS.discover())
+    if XN2: 
+        log.warning(f"Discovering leaves on network {XN2}")
+        log.info(XS2.discover())
     log.warning([i.address for i in XS._leaves])
+
+    if XN2: log.warning([i.address for i in XS2._leaves])
     
     log.info("Connecting to database...")
     shard = MongoClient(config.mongo_URI)
@@ -159,7 +197,7 @@ if __name__ == "__main__":
 
     run(
         collection=collection,
-        system=XS,
+        systems=[XS, XS2],
         sample_period=config.sample_period, 
         log_period=config.update_period
     )

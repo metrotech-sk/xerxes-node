@@ -126,6 +126,9 @@ def tare_leaves(leaves: List[Leaf], addr_range: Optional[List] = None) -> int:
                 
             elif isinstance(leaf, SLeaf):
                 affected += tare_sleaf(leaf)
+                
+            # give sensor time to recover if communication error
+            time.sleep(.1) 
             
     # return the number of affected adresses
     return affected

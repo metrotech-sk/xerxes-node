@@ -136,6 +136,7 @@ class XerxesSystem:
                 pass
             except Exception as e:
                 log.error(sys.exc_info()[:3])
+            time.sleep(.1)
 
         return result
 
