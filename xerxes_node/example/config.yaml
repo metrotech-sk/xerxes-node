@@ -1,0 +1,40 @@
+timeout:
+  network: 0.1  # 100ms
+  node: 0.02  # 20ms
+
+log:
+  level: DEBUG  # DEBUG INFO WARNING ERROR
+  file: "xerxes_node.log"
+  
+database:
+  name: "test"
+  uri: ${XERXES_MONGO_URI}
+  collection: ${HOSTNAME}
+
+system:
+  sample_period: 1  # how often read sensors, [s]
+  upload_period: 60  # how often to push to DB, [s]
+  networks:
+    USB0:
+      device: "/dev/ttyUSB0"
+      baudrate: 115200
+      leafs: 
+        0x1:
+          name: "XIL-1"
+          values:
+            pv0: "inclination_x"
+            pv1: "inclination_y"
+            pv3: "temperature"
+        0x2:
+          name: "XPL-2"
+          values:
+            pv0: "pressure"
+            pv3: "temperature"
+    USB1:
+      device: "/dev/ttyUSB1"
+      baudrate: 115200
+      leafs: 
+        0x3:
+          name: "XDL-3"
+          values:
+            pv0: "distance"
