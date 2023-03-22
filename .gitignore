@@ -123,6 +123,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+# keep example .env files
+!*/example/.env
 
 # Spyder project settings
 .spyderproject
@@ -141,3 +143,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#keep examples
+!example/*
