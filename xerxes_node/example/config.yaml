@@ -1,7 +1,3 @@
-timeout:
-  network: 0.1  # 100ms
-  node: 0.02  # 20ms
-
 log:
   level: DEBUG  # DEBUG INFO WARNING ERROR
   file: "xerxes_node.log"
@@ -12,29 +8,33 @@ database:
   collection: ${HOSTNAME}
 
 system:
-  sample_period: 1  # how often read sensors, [s]
-  upload_period: 60  # how often to push to DB, [s]
-  networks:
-    USB0:
-      device: "/dev/ttyUSB0"
+  sample_period: 2  # how often read sensors, [s]
+  upload_period: 6  # how often to push to DB, [s]
+  networks:  # array of networks - each network is a separate thread
+    - device: "/dev/ttyUSB0"
       baudrate: 115200
-      leafs: 
-        0x1:
-          name: "XIL-1"
+      timeout: 0.01
+      leaves: 
+        - address: 1
+          label: "XAL-1"
           values:
-            pv0: "inclination_x"
-            pv1: "inclination_y"
-            pv3: "temperature"
-        0x2:
-          name: "XPL-2"
+            analog_value0:  pv0
+            analog_value1:  pv1
+            analog_value2:  pv2
+            analog_value3:  pv3
+        - address: 2
+          label: "XPL-2"
           values:
-            pv0: "pressure"
-            pv3: "temperature"
-    USB1:
-      device: "/dev/ttyUSB1"
+            pressure:       pv0
+            temperature:    pv3
+    - device: "/dev/pts/5"
       baudrate: 115200
-      leafs: 
-        0x3:
-          name: "XDL-3"
+      timeout: 0.01
+      leaves: 
+        - address: 3
+          label: "XDL-3"
           values:
-            pv0: "distance"
+            distance:       pv0
+
+# to test, create a virtual serial port with socat: 
+# socat -d -d pty,raw,echo=0 pty,raw,echo=0

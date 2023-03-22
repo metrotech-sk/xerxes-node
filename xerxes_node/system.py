@@ -12,7 +12,6 @@ from typing import (
 )
 from xerxes_protocol import (
     XerxesRoot,
-    Addr,
     ChecksumError, 
     MessageIncomplete,
     Leaf
@@ -147,7 +146,7 @@ class XerxesSystem:
         for label, values in data.items():
             for process_value, value_array in values.items():
                 try:
-                    data[label][process_value] = [sum(value_array) / len(value_array)]
+                    data[label][process_value] = sum(value_array) / len(value_array)
                 except ZeroDivisionError:
                     # delete empty lists
                     data[label][process_value] = None

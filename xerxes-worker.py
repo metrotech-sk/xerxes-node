@@ -8,20 +8,19 @@ import logging
 import re
 import dotenv
 from serial import Serial
-from typing import Dict, List
+from typing import Dict
 from xerxes_protocol import (
     XerxesNetwork, 
     XerxesRoot,
     Leaf
 )
-from xerxes_node.system import XerxesSystem, add_timestamp
+from xerxes_node.system import XerxesSystem
 from xerxes_node.uploader import Uploader
-from yaml import load, dump
+from yaml import load
 try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
-from pprint import pprint as print
 
     
 log = logging.getLogger(__name__)
