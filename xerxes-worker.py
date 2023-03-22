@@ -131,11 +131,13 @@ if __name__ == "__main__":
         log.info("System started.")
         log.debug(f"Living threads: {system.status()}")
         
-        for i in (1,2):
+        while(True):
             # sleep for upload period
             time.sleep(config["system"]["upload_period"])
             log.info("Dumping data...")
             system.dump(directory=MEASUREMENTS_DIR)
+    except KeyboardInterrupt:
+        log.info("Keyboard interrupt. Stopping system...")
     finally:
         system.stop()
         uploader.stop()
