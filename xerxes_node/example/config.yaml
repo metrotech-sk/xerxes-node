@@ -1,0 +1,40 @@
+log:
+  level: DEBUG  # DEBUG INFO WARNING ERROR
+  file: "xerxes_node.log"
+  
+database:
+  name: "test"
+  uri: ${XERXES_MONGO_URI}
+  collection: ${HOSTNAME}
+
+system:
+  sample_period: 2  # how often read sensors, [s]
+  upload_period: 6  # how often to push to DB, [s]
+  networks:  # array of networks - each network is a separate thread
+    - device: "/dev/ttyUSB0"
+      baudrate: 115200
+      timeout: 0.01
+      leaves: 
+        - address: 1
+          label: "XAL-1"
+          values:
+            analog_value0:  pv0
+            analog_value1:  pv1
+            analog_value2:  pv2
+            analog_value3:  pv3
+        - address: 2
+          label: "XPL-2"
+          values:
+            pressure:       pv0
+            temperature:    pv3
+    - device: "/dev/pts/5"
+      baudrate: 115200
+      timeout: 0.01
+      leaves: 
+        - address: 3
+          label: "XDL-3"
+          values:
+            distance:       pv0
+
+# to test, create a virtual serial port with socat: 
+# socat -d -d pty,raw,echo=0 pty,raw,echo=0

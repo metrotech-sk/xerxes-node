@@ -5,7 +5,8 @@ prime
 
 # vscode pičoviny
 .history
-.vscode
+
+config.yaml
 
 #distutills pičoviny
 MANIFEST
@@ -140,4 +141,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-xerxes_node/config.py
