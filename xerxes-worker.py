@@ -27,7 +27,7 @@ from pprint import pprint as print
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-    
+MEASUREMENTS_DIR = "measurements"    
 
 def load_config() -> Dict:
     """Load config from config.yaml and environment variables."""
@@ -116,7 +116,8 @@ if __name__ == "__main__":
     uploader = Uploader(
         uri=database["uri"],
         database=database["name"],
-        collection=database["collection"]
+        collection=database["collection"],
+        directory=MEASUREMENTS_DIR
     )
     system = XerxesSystem(
         roots=roots,
@@ -135,7 +136,7 @@ if __name__ == "__main__":
             # sleep for upload period
             time.sleep(config["system"]["upload_period"])
             log.info("Dumping data...")
-            system.dump()
+            system.dump(directory=MEASUREMENTS_DIR)
     finally:
         system.stop()
         uploader.stop()

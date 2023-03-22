@@ -17,7 +17,7 @@ database."""
 class Uploader:
     worker: Thread
     
-    def __init__(self, uri: str, database: str, collection: str):
+    def __init__(self, uri: str, database: str, collection: str, directory: str):
         
         log.info("Connecting to database...")
         self.shard = MongoClient(uri)
@@ -30,10 +30,10 @@ class Uploader:
         log.info(f"Database:collection {database}:{collection} connected")
         
         # check if measurements directory exists, if not create it
-        if not os.path.isdir("measurements"):
-            log.info("Creating measurements directory...")
-            os.mkdir("measurements")
-    
+        if not os.path.isdir(directory):
+            raise AttributeError(f"Directory {directory} does not exist.")
+        else:
+            self._directory = directory
     
     def start(self) -> Thread:
         """Start new thread which periodically checks for new entries and
@@ -42,7 +42,7 @@ class Uploader:
         returns: Thread object of the thread.
         """
         
-        self.run = True
+        self._run = True
         self.worker = Thread(target=self._upload)
         self.worker.start()
         return self.worker
@@ -50,7 +50,7 @@ class Uploader:
         
     def stop(self) -> None:
         """Stop the thread."""
-        self.run = False
+        self._run = False
         
         # wait for thread to finish
         self.worker.join()
@@ -59,16 +59,17 @@ class Uploader:
     def _upload(self) -> None:
         """Upload new entries to the database."""
         
-        while self.run:
-            for entry in os.listdir("measurements"):
+        while self._run:
+            for entry in os.listdir(self._directory):
                 # unpickle data
-                with open(entry, "rb") as f:
+                filename = os.path.join(self._directory, entry)
+                with open(filename, "rb") as f:
                     data = pickle.load(f)
                 
                 try:
                     result = self.collection.insert_one(data)
-                    os.remove(entry)
-                    log.info(f"Uploaded {entry} to database. Result: {result}")
+                    os.remove(filename)
+                    log.info(f"Uploaded {entry} to database. Result: {result.inserted_id}")
                     
                 except Exception as e:
                     # probably a timeout, try again in 60s

@@ -9,7 +9,7 @@ database:
 
 system:
   sample_period: 2  # how often read sensors, [s]
-  upload_period: 10  # how often to push to DB, [s]
+  upload_period: 6  # how often to push to DB, [s]
   networks:  # array of networks - each network is a separate thread
     - device: "/dev/ttyUSB0"
       baudrate: 115200

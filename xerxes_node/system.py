@@ -56,14 +56,16 @@ class XerxesSystem:
                 # get data from every leaf
                 
                 leaf: Leaf
-                process_values: Dict = leaf.process_values
+                process_values: dict = leaf.process_values
                 label = leaf.label
                 
                 self.measurements_lock.acquire()
                 
                 # these are in format {'pressure': 'pv0', 'temperature': 'pv3'} 
                 if not self.measurements.get(label):
+                    # create entry for this leaf
                     self.measurements[label] = {}
+                    
                     for key, value in process_values.items():
                         self.measurements[label].update({key: []})
                 
@@ -100,7 +102,14 @@ class XerxesSystem:
             log.debug(f"sampled in {(cycletime_s) * 1000} ms")
             
             # sleep for the rest of the sample period
-            time.sleep(self._sample_period - cycletime_s)
+            sleep_for_s = self._sample_period - cycletime_s
+            if sleep_for_s > 0:
+                time.sleep(sleep_for_s)
+            else:
+                log.warning(
+                    f"Sampling period of {self._sample_period} s exceeded by {sleep_for_s * -1} s."
+                )
+                
 
     def spin(self) -> None:
         self._run = True
@@ -131,35 +140,48 @@ class XerxesSystem:
             thread.join()
     
             
-    def _average_measurements(self) -> None:
-        self.measurements_lock.acquire()
+    def _average_measurements(self, data: Dict) -> None:
         log.debug(
-            f"Before averaging: {self.measurements}"
+            f"Before averaging: {data}"
         )
-        for label, values in self.measurements.items():
-            for key, value in values.items():
+        for label, values in data.items():
+            for process_value, value_array in values.items():
                 try:
-                    self.measurements[label][key] = sum(value) / len(value)
+                    data[label][process_value] = [sum(value_array) / len(value_array)]
                 except ZeroDivisionError:
                     # delete empty lists
-                    self.measurements[label].pop(key)
+                    data[label][process_value] = None
         log.debug(
-            f"After averaging: {self.measurements}"
+            f"After averaging: {data}"
         )
-        self.measurements_lock.release()
+        return data
         
     
-    def dump(self) -> None:
-        self._average_measurements()
-        add_timestamp(self.measurements)
+    def dump(self, directory: str) -> None:
+        # lock so we do not corrupt measurements or the pollers won't interfere
+        # with data averaging
+        self.measurements_lock.acquire()
+        data = dict(self.measurements)
+        # clean up the old data
+        self.measurements = {}
+        # dont forget to release the lock
+        self.measurements_lock.release()
+        
+        data = {
+            "measurements": self._average_measurements(data)
+        }
+        
+        add_timestamp(data)
         
         # dump to file for later processing
         tf = tempfile.NamedTemporaryFile(
             delete=False,
-            suffix=".dat"
+            suffix=".dat",
+            prefix="meas",
+            dir=directory
         )
         pickle.dump(
-            obj=self.measurements,
+            obj=data,
             file=tf
         )
         tf.close()
