@@ -131,7 +131,7 @@ if __name__ == "__main__":
         log.info("System started.")
         log.debug(f"Living threads: {system.status()}")
         
-        for i in (1,2):
+        while(1):
             # sleep for upload period
             time.sleep(config["system"]["upload_period"])
             log.info("Dumping data...")
