@@ -26,15 +26,20 @@ except ImportError:
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-MEASUREMENTS_DIR = "measurements"    
+MEASUREMENTS_DIR = "/tmp/measurements"    
 
 def load_config() -> Dict:
     """Load config from config.yaml and environment variables."""
     
     dotenv.load_dotenv()
+    
+    config_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "config.yaml"
+    )
 
     regex = r"(\$\{[\w]+\})"
-    s_yaml = open("config.yaml").read()
+    s_yaml = open(config_path).read()
 
     def replace_env(match: str) -> str:
         return os.environ[match.group(1).lstrip("${").rstrip("}")]

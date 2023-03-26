@@ -31,9 +31,12 @@ class Uploader:
         
         # check if measurements directory exists, if not create it
         if not os.path.isdir(directory):
-            raise AttributeError(f"Directory {directory} does not exist.")
-        else:
-            self._directory = directory
+            try:
+                os.mkdir(directory)
+            except:
+                raise AttributeError(f"Directory {directory} does not exist.")
+        
+        self._directory = directory
     
     def start(self) -> Thread:
         """Start new thread which periodically checks for new entries and
