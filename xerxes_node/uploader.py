@@ -61,20 +61,21 @@ class Uploader:
         
         while self._run:
             for entry in os.listdir(self._directory):
-                # unpickle data
-                filename = os.path.join(self._directory, entry)
-                with open(filename, "rb") as f:
-                    data = pickle.load(f)
-                
-                try:
-                    result = self.collection.insert_one(data)
-                    os.remove(filename)
-                    log.info(f"Uploaded {entry} to database. Result: {result.inserted_id}")
+                if entry.endswith(".dat"):
+                    # unpickle data
+                    filename = os.path.join(self._directory, entry)
+                    with open(filename, "rb") as f:
+                        data = pickle.load(f)
                     
-                except Exception as e:
-                    # probably a timeout, try again in 60s
-                    log.warning(f"Unable to upload {entry} to database: {e}")
-                    time.sleep(60)
+                    try:
+                        result = self.collection.insert_one(data)
+                        os.remove(filename)
+                        log.info(f"Uploaded {entry} to database. Result: {result.inserted_id}")
+                        
+                    except Exception as e:
+                        # probably a timeout, try again in 60s
+                        log.warning(f"Unable to upload {entry} to database: {e}")
+                        time.sleep(60)
             
             # sleep for 100ms to avoid busy waiting
             time.sleep(.1)
