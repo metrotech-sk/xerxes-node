@@ -55,6 +55,7 @@ class Uploader:
         """Stop the thread."""
         self._run = False
         
+        log.info("Waiting for uploader thread to finish...")
         # wait for thread to finish
         self.worker.join()
         
@@ -82,3 +83,5 @@ class Uploader:
             
             # sleep for 100ms to avoid busy waiting
             time.sleep(.1)
+
+        log.warning("Uploader thread stopped.")

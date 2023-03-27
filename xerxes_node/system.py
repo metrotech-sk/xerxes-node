@@ -72,7 +72,8 @@ class XerxesSystem:
                     # now we have a dict with keys like pressure and temperature
                     # and empty lists as values
                     for key, value in process_values.items():
-                        pv = leaf.__getattribute__(value)
+                        # this will read the value from the leaf
+                        pv = leaf.__getattribute__(value)  
                         self.measurements.get(label).get(key).append(pv)
                         log.debug(
                             f"Leaf: {leaf.address}, key: {key}, value: {value}, pv: {pv}"
@@ -89,6 +90,10 @@ class XerxesSystem:
                 except TimeoutError:
                     self._errors += 1
                     log.warning(f"Leaf {leaf.address} is not responding.")
+
+                except ValueError:
+                    self._errors += 1
+                    log.warning(f"Leaf {leaf.address} returned empty data.")
                     
                 except Exception as e:
                     self._errors += 1

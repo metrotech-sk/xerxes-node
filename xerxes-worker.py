@@ -7,6 +7,8 @@ import time
 import logging
 import re
 import dotenv
+import signal
+import sys
 from serial import Serial
 from typing import Dict
 from xerxes_protocol import (
@@ -24,7 +26,6 @@ except ImportError:
 
     
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 MEASUREMENTS_DIR = "/tmp/measurements"    
 
@@ -55,21 +56,30 @@ def load_config() -> Dict:
         Loader=Loader
     )
     
-    log.debug(f"Config loaded: {config}")
               
     return config
+
+
+def sigint_handler(signal, frame):
+    """Handle SIGINT and SIGTERM signal."""
+    log.info(f"{signal} received. Stopping...")
+    system.stop()
+    uploader.stop()
+    log.info("Exiting...")
+    sys.exit(0)
     
     
 if __name__ == "__main__":
+    config = load_config()
+    # config log to show filename and line number
     logging.basicConfig(
-        format="%(levelname)s: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
+        format="%(levelname)s [%(filename)s:%(lineno)s]: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
         # datefmt='%m/%d/%Y %I:%M:%S %p',
         # filename=config.log.file, 
-        level=logging.DEBUG
+        level=logging.getLevelName(config["log"]["level"])
     )
-    log.info("Loading config...")
-    config = load_config()
-    log.setLevel(config["log"]["level"])
+
+    log.debug(f"Config loaded: {config}")
     
     roots = []
     for network in config["system"]["networks"]:
@@ -127,6 +137,10 @@ if __name__ == "__main__":
         roots=roots,
         sample_period=config["system"]["sample_period"],
     )
+
+    # register SIGTERM handler
+    signal.signal(signal.SIGTERM, sigint_handler)
+    signal.signal(signal.SIGINT, sigint_handler)
     
     try:
         log.info("Uploader starting...")
