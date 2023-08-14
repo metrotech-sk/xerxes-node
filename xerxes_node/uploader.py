@@ -59,6 +59,8 @@ class Uploader:
         # wait for thread to finish
         self.worker.join()
         
+    def alive(self) -> bool:
+        return self.worker.is_alive()
         
     def _upload(self) -> None:
         """Upload new entries to the database."""
@@ -68,8 +70,13 @@ class Uploader:
                 if entry.endswith(".dat"):
                     # unpickle data
                     filename = os.path.join(self._directory, entry)
+                    time.sleep(.1)
                     with open(filename, "rb") as f:
-                        data = pickle.load(f)
+                        try:
+                            data = pickle.load(f)
+                        except EOFError:
+                            log.warning(f"Uploader encountered empty file {filename}")
+                            continue
                     
                     try:
                         result = self.collection.insert_one(data)
@@ -77,9 +84,9 @@ class Uploader:
                         log.info(f"Uploaded {entry} to database. Result: {result.inserted_id}")
                         
                     except Exception as e:
-                        # probably a timeout, try again in 60s
+                        # probably a timeout, try again in 10s
                         log.warning(f"Unable to upload {entry} to database: {e}")
-                        time.sleep(60)
+                        time.sleep(10)
             
             # sleep for 100ms to avoid busy waiting
             time.sleep(.1)
