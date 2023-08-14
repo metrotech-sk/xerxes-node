@@ -155,6 +155,8 @@ if __name__ == "__main__":
             time.sleep(config["system"]["upload_period"])
             log.info("Dumping data...")
             system.dump(directory=MEASUREMENTS_DIR)
+            if not uploader.alive():
+                uploader.start()
     except KeyboardInterrupt:
         log.info("Keyboard interrupt. Stopping system...")
     finally:

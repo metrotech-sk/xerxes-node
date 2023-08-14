@@ -9,3 +9,8 @@ wget -O setup.sh https://raw.githubusercontent.com/xeus-cer/xerxes-node/ba3188c4
 sudo bash ./setup.sh
 ```
 
+## Usage
+### Restarting the process
+
+```bash
+sudo systemctl restart
