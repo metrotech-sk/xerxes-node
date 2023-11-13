@@ -13,33 +13,39 @@ import logging
 import os
 import time
 from typing import List
+import traceback
 
 file_path = os.path.realpath(__file__)
 script_dir = os.path.dirname(file_path)
 
-def find_leaves(xr: XerxesRoot) -> List[Leaf]:
+def find_leaves(xr: XerxesRoot, end_addr: int = 127) -> List[Leaf]:
+    log.info(f"Finding leaves on {xr}")
     leaves = []
-    for i in range(127):
+    for i in range(end_addr):
         try:
-            ping_reply = xr.ping(Addr(i))
+            leaf = Leaf(Addr(i), xr)
+            ping_reply = leaf.ping()
             log.info(f"ping reply: {ping_reply}")
-            leaf = Leaf(ping_reply.address, xr)
             leaves.append(leaf)
+            time.sleep(0.2)
         except TimeoutError:
             log.warning(f"Timeout on address {i}")
         except Exception as e:
-            log.error(e)
+            # log error and traceback:
+            log.error(f"Error on address {i}: {e}")
+            log.error(traceback.format_exc())
+            
 
 if __name__ == "__main__":
     print("creating logger")
     log_filename = "/tmp/xerxes.log"
     
     log = logging.getLogger()
+    # setup config to print function:lineno
     logging.basicConfig(
-        format="%(levelname)s: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
-        # datefmt='%m/%d/%Y %I:%M:%S %p',
-        # filename=log_filename, 
-        level=logging._nameToLevel[config.logging_level]
+        level=logging.DEBUG,
+        format='%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s',
+        datefmt='%H:%M:%S'
     )
     
 
@@ -70,8 +76,9 @@ if __name__ == "__main__":
         XR2 = XerxesRoot(Addr(0xfe), XN2)
     else:
         XR2 = False
-    log.warning("Master created")
+    log.warning("Masters created")
     log.info(str(XR))
+    log.info(str(XR2))
 
     log.warning("Creating node system")
     XS = XerxesSystem(
@@ -88,16 +95,8 @@ if __name__ == "__main__":
     else:
         XS2 = False
     log.info("System created.")
-    log.warning(f"Discovering leaves on network {XN}")
-    log.info(XS.discover())
-    if XN2: 
-        log.warning(f"Discovering leaves on network {XN2}")
-        log.info(XS2.discover())
-    log.warning([i.address for i in XS._leaves])
-
-    if XN2: log.warning([i.address for i in XS2._leaves])
     
-    find_leaves(XR)
+    # find_leaves(XR)
     find_leaves(XR2)
     
     
