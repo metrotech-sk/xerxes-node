@@ -50,7 +50,7 @@ cd /home/$xerxes_user
 
 # clone repo
 echo "cloning xerxes repository..."
-sudo -u $xerxes_user git clone https://themladypan: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@github.com/xeus-cer/xerxes-node.git
+sudo -u $xerxes_user git clone https://metrotech-sk/xerxes-node.git
 cd xerxes-node
 git checkout $git_branch
 
