@@ -5,163 +5,148 @@
 import os
 import time
 import logging
-import re
 import dotenv
 import signal
 import sys
 from serial import Serial
 from typing import Dict
+import struct
 from xerxes_protocol import (
-    XerxesNetwork, 
+    XerxesNetworkSingleton,
     XerxesRoot,
-    Leaf
+    Leaf,
+    memory,
 )
-from xerxes_node.system import XerxesSystem
+from pymongo import MongoClient
+from xerxes_node.system2 import Worker
 from xerxes_node.uploader import Uploader
 from yaml import load
+
 try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
 
-    
+
 log = logging.getLogger(__name__)
 
-MEASUREMENTS_DIR = "/tmp/measurements"    
 
 def load_config() -> Dict:
     """Load config from config.yaml and environment variables."""
-    
+
     dotenv.load_dotenv()
-    
+
     config_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "config.yaml"
+        os.path.dirname(os.path.abspath(__file__)), "config.yaml"
     )
 
-    regex = r"(\$\{[\w]+\})"
     s_yaml = open(config_path).read()
+    config: Dict = load(s_yaml, Loader=Loader)
 
-    def replace_env(match: str) -> str:
-        return os.environ[match.group(1).lstrip("${").rstrip("}")]
-
-    config_str = re.sub(
-        regex,
-        replace_env,
-        s_yaml
-    )
-
-    config: Dict = load(
-        config_str, 
-        Loader=Loader
-    )
-    
-              
     return config
 
 
-def sigint_handler(signal, frame):
-    """Handle SIGINT and SIGTERM signal."""
-    log.info(f"{signal} received. Stopping...")
-    system.stop()
-    uploader.stop()
-    log.info("Exiting...")
-    sys.exit(0)
-    
-    
+class Accelerometer(Leaf):
+    @property
+    def fft(self):
+
+        # read message buffer from sensor
+        payload = self.read_reg_net(memory.MESSAGE_OFFSET, 128)
+        payload += self.read_reg_net(memory.MESSAGE_OFFSET + 128, 128)
+        # unpack 64 floats into list:
+        vals = struct.unpack("64f", payload)
+        data = {}
+        data["spectrum"] = []
+        for i in range(0, 60, 2):
+            f = {
+                "f": vals[i],
+                "a": vals[i + 1],
+            }
+            data["spectrum"].append(f)
+        data["main"] = {
+            "f": vals[60],
+            "a": vals[61],
+        }
+        return data
+
+
 if __name__ == "__main__":
     config = load_config()
     # config log to show filename and line number
     logging.basicConfig(
-        format="%(levelname)s [%(filename)s:%(lineno)s]: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s', 
+        format="%(asctime)s %(levelname)s [%(filename)s:%(lineno)s]: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s',
         # datefmt='%m/%d/%Y %I:%M:%S %p',
-        # filename=config.log.file, 
-        level=logging.getLevelName(config["log"]["level"])
+        # filename=config.log.file,
+        level=logging.getLevelName(config["log"]["level"]),
     )
 
     log.debug(f"Config loaded: {config}")
-    
-    roots = []
-    for network in config["system"]["networks"]:
-        _xn = XerxesNetwork(
-            Serial(network["device"])
-            )
-        _xn.init(
-            baudrate=network["baudrate"],
-            timeout=network["timeout"]
-        )
-        log.debug(
-            f"Network created: {_xn}"
-        )
-        
-        _xr = XerxesRoot(
-            my_addr=0xFE,
-            network=_xn
-        )
-        log.debug(
-            f"Root created: {_xr}"
-        )
-        roots.append(_xr)
-        
-        leaves = []
-        for leaf in network["leaves"]:
-            _xl = Leaf(
-                addr=leaf["address"],
-                root=_xr
-            )
-            
-            # pass these values with leaves
+
+    roots = {}
+    for root in config["system"]["roots"]:
+        _xn = XerxesNetworkSingleton(Serial(root["device"]))
+        _xn.init(baudrate=root["baudrate"], timeout=root["timeout"])
+        log.debug(f"Network created: {_xn}")
+
+        _xr = XerxesRoot(my_addr=0xFE, network=_xn)
+        log.debug(f"Root created: {_xr}")
+        roots[root["label"]] = _xr
+
+    log.debug(f"Roots created: {roots}")
+
+    workers = {}
+
+    for worker in config["system"]["workers"]:
+        log.debug(f"Creating worker: {worker}")
+        _xw = Worker(name=worker["label"])
+        workers[worker["label"]] = _xw
+        _leaves = []
+        for leaf in worker["leaves"]:
+            _xl = Accelerometer(addr=leaf["address"], root=roots[leaf["root"]])
             _xl.label = leaf["label"]
-            _xl.process_values = leaf["values"]
-                
-            log.debug(
-                f"Leaf created: {_xl}"
-            )
-            leaves.append(_xl)
-            
-        # REWORK: this is a hack, should be done in XerxesRoot?
-        # pass leaves with corresponding root
-        _xr.leaves = leaves
-                
+            _xl.values = leaf["values"]
+            _leaves.append(_xl)
+        _xw.setup(
+            period=worker["period"],
+            leaves=_leaves,
+            workdir=config["system"]["work_dir"],
+            name=worker["label"],
+        )
+        _xw.start()
 
     log.info("System created.")
-    
-    database = config["database"]
+
+    uri = os.getenv("XERXES_MONGO_URI")
+    database = MongoClient(uri).get_database(config["database"]["name"])
     uploader = Uploader(
-        uri=database["uri"],
-        database=database["name"],
-        collection=database["collection"],
-        directory=MEASUREMENTS_DIR
+        collection=database[config["database"]["collection"]],
+        workdir=config["system"]["work_dir"],
+        upload_period=config["uploader"]["upload_period"],
     )
-    system = XerxesSystem(
-        roots=roots,
-        sample_period=config["system"]["sample_period"],
-    )
+
+    def sigint_handler(signal, frame):
+        """Handle SIGINT and SIGTERM signal."""
+        log.info(f"{signal} received. Stopping...")
+        for worker in workers.values():
+            worker.stop()
+        uploader.stop()
+        log.info("Exiting...")
+        sys.exit(0)
 
     # register SIGTERM handler
     signal.signal(signal.SIGTERM, sigint_handler)
     signal.signal(signal.SIGINT, sigint_handler)
-    
+
     try:
         log.info("Uploader starting...")
         uploader.start()  # start uploader thread
         log.info("Uploader started. Starting system...")
-        system.spin()  # start n-threads for each root
-        log.info("System started.")
-        log.debug(f"Living threads: {system.status()}")
-        
-        while(True):
-            # sleep for upload period
-            time.sleep(config["system"]["upload_period"])
-            log.info("Dumping data...")
-            system.dump(directory=MEASUREMENTS_DIR)
-            if not uploader.alive():
-                uploader.start()
+        while True:
+            time.sleep(1)
+            print(".", end="")
     except KeyboardInterrupt:
         log.info("Keyboard interrupt. Stopping system...")
     finally:
-        system.stop()
-        uploader.stop()
-    
-    log.info("System stopped.")
+        sigint_handler(signal.SIGINT, None)
 
+    log.info("System stopped.")
