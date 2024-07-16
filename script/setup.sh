@@ -5,7 +5,7 @@
 
 udev_rules_file='/etc/udev/rules.d/50-custom.rules'
 
-xerxes_user='xerxes'
+xerxes_user='ubuntu'
 git_branch='devel'
 
 
@@ -38,9 +38,9 @@ hostnamectl set-hostname $(sudo zerotier info|cut -d" " -f3)
 
 echo "#######################################################"
 echo "ADDING NEW USER, $xerxes_user"
-adduser --gecos "" $xerxes_user
+# adduser --gecos "" $xerxes_user
 # povoliť sudo
-usermod -aG sudo $xerxes_user
+# usermod -aG sudo $xerxes_user
 echo "Adding user to spiuser GROUP..."
 groupadd -f --system spiuser
 usermod -a -G spiuser $xerxes_user
@@ -49,10 +49,10 @@ usermod -aG dialout $xerxes_user
 cd /home/$xerxes_user
 
 # clone repo
-echo "cloning xerxes repository..."
-sudo -u $xerxes_user git clone https://metrotech-sk/xerxes-node.git
+# echo "cloning xerxes repository..."
+# sudo -u $xerxes_user git clone https://metrotech-sk/xerxes-node.git
 cd xerxes-node
-git checkout $git_branch
+# git checkout $git_branch
 
 cat script/requirements.apt | xargs apt install -y
 
