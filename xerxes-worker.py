@@ -68,13 +68,18 @@ class Accelerometer(Leaf):
             "a": vals[61],
         }
         return data
+    
+    @property
+    def reset(self):
+        self.reset_soft()
+        return None
 
 
 if __name__ == "__main__":
     config = load_config()
     # config log to show filename and line number
     logging.basicConfig(
-        format="%(asctime)s %(levelname)s [%(filename)s:%(lineno)s]: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s',
+        format="%(levelname)s [%(filename)s:%(lineno)s]: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s',
         # datefmt='%m/%d/%Y %I:%M:%S %p',
         # filename=config.log.file,
         level=logging.getLevelName(config["log"]["level"]),

@@ -80,7 +80,7 @@ class Job(Thread):
                 value = safe_read_attribute(leaf, value)
                 leaf_data[key] = value
                 log.debug(
-                    f"Leaf {leaf.label}@0x{hex(leaf.address)} {key}: {value}"
+                    f"Leaf {leaf.label}@{hex(leaf.address)} {key}: {value}"
                 )
 
             data[leaf.label] = leaf_data

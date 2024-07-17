@@ -1,0 +1,109 @@
+log:
+  level: DEBUG  # DEBUG INFO WARNING ERROR
+  file: "xerxes_node.log"
+  
+database:
+  name: "test"
+  collection: PRJ-16
+
+uploader:
+  upload_period: 10  # how often to push to DB, [s]
+
+system:
+  work_dir: "/tmp/xerxes"  # where to store measurements
+  log_dir: "/var/log/xerxes"  # where to store logs
+
+  workers:
+    - label: "worker1"
+      period: 1 # seconds
+      leaves: 
+        - address: 1
+          label: "XTL-1"
+          root: "usb0"
+          values:
+            t:  pv3
+        - address: 2
+          label: "XTL-2"
+          root: "usb0"
+          values:
+            t:  pv3
+        - address: 3
+          label: "XTL-3"
+          root: "usb0"
+          values:
+            t:  pv3
+
+        - address: 4
+          label: "XTL-4"
+          root: "usb0"
+          values:
+            t:  pv3
+
+        - address: 5
+          label: "XTL-5"
+          root: "usb0"
+          values:
+            t:  pv3
+
+        - address: 6
+          label: "XTL-6"
+          root: "usb0"
+          values:
+            t:  pv3
+        
+        - address: 7
+          label: "XAL-7"
+          root: "usb0"
+          values:
+            x: pv0
+            y: pv1
+            z: pv2
+            t: pv3
+        
+        - address: 8
+          label: "XAL-8"
+          root: "usb0"
+          values:
+            x: pv0
+            y: pv1
+            z: pv2
+            t: pv3
+
+    - label: "worker_fft_5s"
+      period: 5 # seconds
+      leaves: 
+        - address: 7
+          label: "XAL-7"
+          root: "usb0"
+          values:
+            fft: fft
+        - address: 8
+          label: "XAL-8"
+          root: "usb0"
+          values:
+            fft: fft
+    
+    - label: "worker_reset"
+      period: 30
+      leaves:
+        - address: 7
+          label: "XAL-7"
+          root: "usb0"
+          values:
+            reset: reset
+        - address: 8
+          label: "XAL-8"
+          root: "usb0"
+          values:
+            reset: reset
+  
+  roots: 
+    - label: "usb0"
+      device: "/dev/ttyUSB0"
+      baudrate: 115200
+      timeout: 0.02
+  
+
+
+# to test, create a virtual serial port with socat: 
+# socat -d -d pty,raw,echo=0 pty,raw,echo=0
