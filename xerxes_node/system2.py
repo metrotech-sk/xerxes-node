@@ -76,12 +76,18 @@ class Job(Thread):
         data = {}
         for leaf in self.leaves:
             leaf_data = {}
-            for key, value in leaf.values.items():
-                value = safe_read_attribute(leaf, value)
-                leaf_data[key] = value
-                log.debug(
-                    f"Leaf {leaf.label}@{hex(leaf.address)} {key}: {value}"
-                )
+            if leaf.values:
+                for key, value in leaf.values.items():
+                    value = safe_read_attribute(leaf, value)
+                    leaf_data[key] = value
+                    log.debug(
+                        f"Leaf {leaf.label}@{hex(leaf.address)} {key}: {value}"
+                    )
+            
+            if leaf.calls:
+                for call in leaf.calls:
+                    retval = leaf.__getattribute__(call)()
+                    log.info(f"Leaf {leaf.label}@{hex(leaf.address)} {call}: {retval}")
 
             data[leaf.label] = leaf_data
 

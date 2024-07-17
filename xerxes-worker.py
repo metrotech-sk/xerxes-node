@@ -109,7 +109,8 @@ if __name__ == "__main__":
         for leaf in worker["leaves"]:
             _xl = Accelerometer(addr=leaf["address"], root=roots[leaf["root"]])
             _xl.label = leaf["label"]
-            _xl.values = leaf["values"]
+            _xl.values = leaf.get("values") if leaf.get("values") else []
+            _xl.calls = leaf.get("calls") if leaf.get("calls") else []
             _leaves.append(_xl)
         _xw.setup(
             period=worker["period"],
