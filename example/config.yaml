@@ -1,46 +1,47 @@
 log:
-  level: DEBUG  # DEBUG INFO WARNING ERROR
+  level: INFO  # DEBUG INFO WARNING ERROR
   file: "xerxes_node.log"
   
 database:
   name: "test"
-  uri: ${XERXES_MONGO_URI}
-  collection: ${HOSTNAME}
+  collection: PRJ-16
+
+uploader:
+  upload_period: 10  # how often to push to DB, [s]
 
 system:
-  sample_period: 2  # how often read sensors, [s]
-  upload_period: 6  # how often to push to DB, [s]
-  networks:  # array of networks - each network is a separate thread
-    - device: "/dev/ttyUSB0"
-      baudrate: 115200
-      timeout: 0.01
+  work_dir: "/tmp/xerxes"  # where to store measurements
+  log_dir: "/var/log/xerxes"  # where to store logs
+
+  workers:
+    - label: "worker1"
+      period: 1 # seconds
       leaves: 
-        - address: 1
+        - address: 0
           label: "XAL-1"
+          root: "usb0"
           values:
-            analog_value0:  pv0
-            analog_value1:  pv1
-            analog_value2:  pv2
-            analog_value3:  pv3
-            average_pv0:    mean_pv0
-            stddev_pv0:     std_dev_pv0
-            minimal_pv0:    min_pv0
-            maximal_pv0:    max_pv0
-            digital_value0: dv0
-            device_uid:     device_uid
-        - address: 2
-          label: "XPL-2"
-          values:
-            pressure:       pv0
-            temperature:    pv3
-    - device: "/dev/pts/5"
-      baudrate: 115200
-      timeout: 0.01
+            x:  pv0
+            y:  pv1
+            z:  pv2
+            t:  pv3
+
+    - label: "worker60"
+      period: 5 # seconds
       leaves: 
-        - address: 3
-          label: "XDL-3"
+        - address: 0
+          label: "XAL-1"
+          root: "usb0"
           values:
-            distance:       pv0
+            fft: fft
+  
+  roots: 
+    - label: "usb0"
+      device: "/dev/ttyUSB0"
+      baudrate: 115200
+      timeout: 0.02
+  
+
 
 # to test, create a virtual serial port with socat: 
 # socat -d -d pty,raw,echo=0 pty,raw,echo=0
