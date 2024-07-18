@@ -65,20 +65,21 @@ systemctl enable xerxes-node.service
 # TODO (@theMladyPan) skontrolovať či to inštaluje dobre
 echo "Installing Udev rules..."
 cp script/50-custom.rules /etc/udev/rules.d/
+cp script/90-usb-serial-latency.rules /etc/udev/rules.d/
 chown root:root $udev_rules_file
 udevadm control --reload-rules
 udevadm trigger
 
-echo "Lowering latency of USB/Serial device 15  > 1ms"
-echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer
+# TODO: Remove this once proved it was only temporary
+# echo "Lowering latency of USB/Serial device 15  > 1ms"
+# echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer
 
 echo "creating virtual environment..."
-python3 -m venv ./venv
+sudo -u $xerxes_user python3 -m venv ./venv
 echo "installing and building dependencies, this may take several hours"
-venv/bin/python -m pip install -r requirements.txt
+sudo -u $xerxes_user venv/bin/python -m pip install -r requirements.txt
 
-spd-say "Installation complete!"
-
-echo "Done! rebooting in 60 seconds..."
-sleep 60
+echo "Installation complete!"
+echo "Done! rebooting in 10 seconds..."
+sleep 10
 reboot now
