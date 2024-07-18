@@ -11,6 +11,7 @@ import sys
 from serial import Serial
 from typing import Dict
 import struct
+from pprint import pprint
 from xerxes_protocol import (
     XerxesNetworkSingleton,
     XerxesRoot,
@@ -21,6 +22,7 @@ from pymongo import MongoClient
 from xerxes_node.system2 import Worker
 from xerxes_node.uploader import Uploader
 from yaml import load
+from threading import Lock
 
 try:
     from yaml import CLoader as Loader
@@ -91,6 +93,7 @@ if __name__ == "__main__":
     for root in config["system"]["roots"]:
         _xn = XerxesNetworkSingleton(Serial(root["device"]))
         _xn.init(baudrate=root["baudrate"], timeout=root["timeout"])
+        _xn.nlock = Lock()
         log.debug(f"Network created: {_xn}")
 
         _xr = XerxesRoot(my_addr=0xFE, network=_xn)
@@ -147,6 +150,8 @@ if __name__ == "__main__":
         log.info("Uploader starting...")
         uploader.start()  # start uploader thread
         log.info("Uploader started. Starting system...")
+        pprint("Xerxes node started, workers: ")
+        pprint(config["system"]["workers"])
         while True:
             time.sleep(1)
             # wait here for signal

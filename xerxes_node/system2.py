@@ -15,7 +15,7 @@ from xerxes_protocol import (
 )
 
 from .timeutil import add_timestamp
-from threading import Thread
+from threading import Thread, Lock
 import json
 import os
 
@@ -56,7 +56,7 @@ class Job(Thread):
 
     It will collect data from leaves and save it to file."""
 
-    def __init__(self, leaves: List[Leaf], workdir="/tmp/xerxes", name=None):
+    def __init__(self, leaves: List[Leaf], workdir="/tmp/xerxes", name=None,):
         """Initialize job with leaves.
 
         Args:
@@ -79,7 +79,8 @@ class Job(Thread):
             leaf_data = {}
             if leaf.values:
                 for key, value in leaf.values.items():
-                    value = safe_read_attribute(leaf, value)
+                    with leaf.network.nlock:
+                        value = safe_read_attribute(leaf, value)
                     leaf_data[key] = value
                     log.debug(
                         f"Leaf {leaf.label}@{hex(leaf.address)} {key}: {value}"
@@ -125,7 +126,7 @@ class Worker(Thread):
     def setup(
         self,
         period: int,
-        leaves: List[Leaf],
+        leaves: List[Leaf], 
         workdir: str = "/tmp/xerxes",
         name=None,
     ):
@@ -154,7 +155,9 @@ class Worker(Thread):
         while self._period and self._active:
             log.debug(f"Starting job")
             self.job = Job(
-                self._leaves, workdir=self._workdir, name=self._name
+                self._leaves, 
+                workdir=self._workdir, 
+                name=self._name
             )
             self.job.start()
             time.sleep(self._period)
