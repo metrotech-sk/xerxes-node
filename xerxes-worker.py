@@ -79,7 +79,7 @@ if __name__ == "__main__":
     config = load_config()
     # config log to show filename and line number
     logging.basicConfig(
-        format="%(levelname)s [%(filename)s:%(lineno)s]: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s',
+        format="%(asctime)s %(levelname)s [%(filename)s:%(lineno)s]: %(message)s",  # '%(asctime)s: %(name)s: %(levelname)s - %(message)s',
         # datefmt='%m/%d/%Y %I:%M:%S %p',
         # filename=config.log.file,
         level=logging.getLevelName(config["log"]["level"]),
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         log.info("Uploader started. Starting system...")
         while True:
             time.sleep(1)
-            print(".", end="")
+            # wait here for signal
     except KeyboardInterrupt:
         log.info("Keyboard interrupt. Stopping system...")
     finally:

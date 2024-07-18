@@ -14,8 +14,8 @@ system:
   log_dir: "/var/log/xerxes"  # where to store logs
 
   workers:
-    - label: "worker1"
-      period: 1 # seconds
+    - label: "w_temp_30s"
+      period: 30 # seconds
       leaves: 
         - address: 1
           label: "XTL-1"
@@ -50,7 +50,10 @@ system:
           root: "usb0"
           values:
             t:  pv3
-        
+
+    - label: "w_accel_1s"
+      period: 1 # seconds
+      leaves:         
         - address: 7
           label: "XAL-7"
           root: "usb0"
@@ -69,8 +72,8 @@ system:
             z: pv2
             t: pv3
 
-    - label: "worker_fft_5s"
-      period: 5 # seconds
+    - label: "w_fft_15s"
+      period: 15 # seconds
       leaves: 
         - address: 7
           label: "XAL-7"
@@ -83,19 +86,20 @@ system:
           values:
             fft: fft
     
-    - label: "worker_reset"
-      period: 30
-      leaves:
-        - address: 7
-          label: "XAL-7"
-          root: "usb0"
-          calls:
-            reset_soft
-        - address: 8
-          label: "XAL-8"
-          root: "usb0"
-          calls:
-            reset_soft
+#     - label: "worker_reset"
+#       period: 30
+#       leaves:
+#         - address: 7
+#           label: "XAL-7"
+#           root: "usb0"
+#           calls:
+#             - "reset_soft"
+# 
+#         - address: 8
+#           label: "XAL-8"
+#           root: "usb0"
+#           calls:
+#             - "reset_soft"
   
   roots: 
     - label: "usb0"

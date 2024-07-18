@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from pymongo import MongoClient, UpdateOne
+from pymongo import UpdateOne
 from pymongo.collection import Collection
 from threading import Thread
 import os
@@ -41,7 +41,7 @@ class Uploader:
         """
 
         self._run = True
-        self.worker = Thread(target=self._upload)
+        self.worker = Thread(target=self._upload, name="Uploader")
         self.worker.start()
         return self.worker
 
@@ -61,18 +61,23 @@ class Uploader:
         """Upload new entries to the database."""
 
         while self._run:
-            operations = []
-
             for entry in os.listdir(self._directory):
                 if entry.endswith(".dat"):
                     # unpickle data
                     filename = os.path.join(self._directory, entry)
                     with open(filename, "r") as f:
                         try:
+                            # wait 10ms so that file is not locked
+                            time.sleep(0.01) 
                             data = json.load(f)
                         except EOFError:
                             log.warning(
                                 f"Uploader encountered empty file {filename}"
+                            )
+                            continue
+                        except Exception as e:
+                            log.error(
+                                f"Unable to read {filename}: {e}"
                             )
                             continue
 
@@ -80,23 +85,37 @@ class Uploader:
                         keys = list(
                             data.keys()
                         )  # eg. XAL-1, XAL-2, XAL-3, time
-                        # remove time from keys:
+                        # remove time from keys because we dont need to update it
                         keys.remove("time")
                         to_set = {
                             f"{key}.{k}": data[key][k]
                             for key in keys
                             for k in data[key]
                         }
-                        op = UpdateOne(
-                            {"time.datetime": data["time"]["datetime"]},
-                            {"$set": to_set},
-                            upsert=True,
-                        )
-                        operations.append(op)
-
+                        
+                        update_filter = {"time.datetime": data["time"]["datetime"]}
+                        update_data = {"$set": to_set}
+                        # update right away
+                        result = self.col.update_one(update_filter, update_data, upsert=True) 
+                        
+                        # op = UpdateOne(
+                        #     {"time.datetime": data["time"]["datetime"]},
+                        #     {"$set": to_set},
+                        #     upsert=True,
+                        # )
+                        # operations.append(op)
+                        if result.modified_count or result.upserted_id:
+                            if result.modified_count:
+                                log.info(f"Modified document in database")
+                            else:
+                                log.info(f"Inserted new document in database")
+                                
+                            log.debug(f"Removing file: {filename}")
+                        else:
+                            log.error(f"Failed to update document in database, {result}")
+                            log.warning(f"Data lost: {update_data}")
                         os.remove(filename)
-                        log.info(f"New update added to queue")
-                        log.debug(f"Operation: {op}")
+                            
 
                     except Exception as e:
                         # probably a timeout, try again in 10s
@@ -104,10 +123,7 @@ class Uploader:
                             f"Unable to upload {entry} to database: {e}"
                         )
                         time.sleep(10)
-            if operations:
-                result = self.col.bulk_write(operations, ordered=False)
-                log.info(f"Result of bulk operation: {result}")
 
-            time.sleep(self._upload_period)
+            time.sleep(0.1) # wait 100ms
 
         log.warning("Uploader thread stopped.")

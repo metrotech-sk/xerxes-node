@@ -3,7 +3,7 @@
 
 import logging
 import sys
-import tempfile
+import datetime
 from threading import Thread, Lock
 import time
 from typing import Dict, List
@@ -17,6 +17,7 @@ from xerxes_protocol import (
 from .timeutil import add_timestamp
 from threading import Thread
 import json
+import os
 
 
 log = logging.getLogger(__name__)
@@ -93,15 +94,19 @@ class Job(Thread):
 
         # add timestamp to data
         add_timestamp(data)
-
+        filename_location = os.path.join(
+            self._workdir,
+            f"{self._name}_{datetime.datetime.now().isoformat(timespec='seconds').replace(':', '-')}.dat",
+        )
         # save data to file
-        with tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=".dat",
-            prefix="data_" if not self._name else self._name + "_",
-            dir=self._workdir,
-            mode="w",
-        ) as f:
+        with open(filename_location, "w") as f:
+        # with tempfile.NamedTemporaryFile(
+        #     delete=False,
+        #     suffix=".dat",
+        #     prefix="data_" if not self._name else self._name + "_",
+        #     dir=self._workdir,
+        #     mode="w",
+        # ) as f:
             # pickle.dump(data, f)
             json.dump(data, f, skipkeys=True, indent=4)
             log.info(f"Data saved to {f.name}")
