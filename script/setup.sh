@@ -64,6 +64,7 @@ systemctl enable xerxes-node.service
 
 # TODO (@theMladyPan) skontrolovať či to inštaluje dobre
 echo "Installing Udev rules..."
+cp script/40-huawei.rules /etc/udev/rules.d/
 cp script/50-custom.rules /etc/udev/rules.d/
 cp script/90-usb-serial-latency.rules /etc/udev/rules.d/
 chown root:root $udev_rules_file
