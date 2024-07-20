@@ -1,58 +1,87 @@
 log:
-  level: INFO  # DEBUG INFO WARNING ERROR
+  level: WARNING  # DEBUG INFO WARNING ERROR
   file: "xerxes_node.log"
   
 database:
-  name: "test"
+  name: "prod"
   collection: PRJ-16
 
+uploader:
+  upload_period: 10  # how often to push to DB, [s]
+
 system:
-  work_dir: "/tmp/xerxes"  # where to store measurements
+  work_dir: "/tmp/"  # where to store measurements
   log_dir: "/var/log/xerxes"  # where to store logs
 
   workers:
-    - label: "w_temp_30s"
+    - label: "w_temp_strain_30s"
       period: 30 # seconds
       leaves: 
         - address: 1
-          label: "XTL-1"
+          label: "T1"
           root: "usb0"
           values:
             t:  pv3
         - address: 2
-          label: "XTL-2"
+          label: "T2"
           root: "usb0"
           values:
             t:  pv3
         - address: 3
-          label: "XTL-3"
+          label: "T3"
           root: "usb0"
           values:
             t:  pv3
 
         - address: 4
-          label: "XTL-4"
+          label: "T4"
           root: "usb0"
           values:
             t:  pv3
 
         - address: 5
-          label: "XTL-5"
+          label: "T5"
           root: "usb0"
           values:
             t:  pv3
 
         - address: 6
-          label: "XTL-6"
+          label: "T6"
           root: "usb0"
           values:
             t:  pv3
+        
+        - address: 7
+          label: "S7"
+          root: "usb0"
+          values:
+            s:  pv0
+
+        - address: 8
+          label: "S8"
+          root: "usb0"
+          values:
+            s:  pv0
+
+        - address: 9
+          label: "S9"
+          root: "usb0"
+          values:
+            s:  pv0
+
+        - address: 10
+          label: "S10"
+          root: "usb0"
+          values:
+            s:  pv0
+
+
 
     - label: "w_accel_1s"
       period: 1 # seconds
       leaves:         
-        - address: 7
-          label: "XAL-7"
+        - address: 30
+          label: "A30"
           root: "usb0"
           values:
             x: pv0
@@ -60,8 +89,8 @@ system:
             z: pv2
             t: pv3
         
-        - address: 8
-          label: "XAL-8"
+        - address: 31
+          label: "A31"
           root: "usb0"
           values:
             x: pv0
@@ -69,20 +98,22 @@ system:
             z: pv2
             t: pv3
 
+
     - label: "w_fft_15s"
       period: 15 # seconds
       leaves: 
-        - address: 7
-          label: "XAL-7"
+        - address: 30
+          label: "A30"
           root: "usb0"
           values:
             fft: fft
-        - address: 8
-          label: "XAL-8"
+        - address: 31
+          label: "A31"
           root: "usb0"
           values:
             fft: fft
-            
+  
+  
   roots: 
     - label: "usb0"
       device: "/dev/ttyUSB0"
