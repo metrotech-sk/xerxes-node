@@ -64,16 +64,13 @@ systemctl enable xerxes-node.service
 
 # TODO (@theMladyPan) skontrolovať či to inštaluje dobre
 echo "Installing Udev rules..."
-cp script/40-huawei.rules /etc/udev/rules.d/
-cp script/50-custom.rules /etc/udev/rules.d/
-cp script/90-usb-serial-latency.rules /etc/udev/rules.d/
+cp script/etc/udev/rules.d/40-huawei.rules /etc/udev/rules.d/
+cp script/etc/udev/rules.d/50-custom.rules /etc/udev/rules.d/
+cp script/etc/netplan/50-cloud-init.yaml /etc/netplan/
 chown root:root $udev_rules_file
 udevadm control --reload-rules
 udevadm trigger
 
-# TODO: Remove this once proved it was only temporary
-# echo "Lowering latency of USB/Serial device 15  > 1ms"
-# echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer
 
 echo "creating virtual environment..."
 sudo -u $xerxes_user python3 -m venv ./venv
