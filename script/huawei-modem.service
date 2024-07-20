@@ -1,0 +1,12 @@
+[Unit]
+Description=Huawei modem reset & setup script
+# After=systemd-sysctl.service
+Before=network-online.target
+
+[Service]
+ExecStart=/home/ubuntu/xerxes-node/script/huawei_boot.sh
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=default.target

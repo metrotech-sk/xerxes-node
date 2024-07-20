@@ -1,6 +1,6 @@
 [Unit]
 Description=Xerxes node daemon service
-After=network.target
+After=network-online.target
 StartLimitIntervalSec=0
 
 [Service]

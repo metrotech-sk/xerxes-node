@@ -18,7 +18,7 @@ from xerxes_protocol import (
     Leaf,
     memory,
 )
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from xerxes_node.system2 import Worker
 from xerxes_node.uploader import Uploader
 from yaml import load
@@ -126,7 +126,14 @@ if __name__ == "__main__":
     log.info("System created.")
 
     uri = os.getenv("XERXES_MONGO_URI")
-    database = MongoClient(uri).get_database(config["database"]["name"])
+    while True:
+        try:
+            database = MongoClient(uri).get_database(config["database"]["name"])
+            break
+        except errors.ConfigurationError:
+                log.error("Not able to connect to the server. Trying again in 5s")
+                time.sleep(5)
+            
     uploader = Uploader(
         collection=database[config["database"]["collection"]],
         workdir=config["system"]["work_dir"],

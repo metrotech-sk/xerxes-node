@@ -67,7 +67,12 @@ systemctl enable xerxes-node.service
 # TODO (@theMladyPan) skontrolovať či to inštaluje dobre
 echo "Installing Udev rules..."
 cp script/etc/udev/rules.d/* /etc/udev/rules.d/
+echo "Installing netplan configuration..."
 cp script/etc/netplan/* /etc/netplan/
+echo "Installing systemd networkd configuration..."
+cp script/run/systemd/system/systemd-networkd-wait-online.service.d/* /run/systemd/system/systemd-networkd-wait-online.service.d
+
+# reload udev rules
 chown root:root /etc/udev/rules.d/*
 udevadm control --reload-rules
 udevadm trigger
