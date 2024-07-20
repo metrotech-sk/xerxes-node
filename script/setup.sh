@@ -58,11 +58,6 @@ cd xerxes-node
 
 cat script/requirements.apt | xargs apt install -y
 
-# install xerxes systemd daemon
-echo "installing xerxes daemon..."
-
-ln script/xerxes-node.service /etc/systemd/system
-systemctl enable xerxes-node.service
 
 # TODO (@theMladyPan) skontrolovať či to inštaluje dobre
 echo "Installing Udev rules..."
@@ -71,12 +66,19 @@ echo "Installing netplan configuration..."
 cp script/etc/netplan/* /etc/netplan/
 echo "Installing systemd networkd configuration..."
 mkdir -p /etc/systemd/system/systemd-networkd-wait-online.service.d
-cp script/etc/systemd/system/systemd-networkd-wait-online.service.d/* /etc/systemd/system/systemd-networkd-wait-online.service.d
+cp -r script/etc/systemd/system/* /etc/systemd/system/
 
 # reload udev rules
 chown root:root /etc/udev/rules.d/*
 udevadm control --reload-rules
 udevadm trigger
+
+# install xerxes systemd daemon
+echo "installing xerxes daemon..."
+systemctl enable xerxes-node.service
+systemctl enable huawei-modem.service
+# reload daemon
+systemctl daemon-reload
 
 
 echo "creating virtual environment..."
