@@ -70,7 +70,8 @@ cp script/etc/udev/rules.d/* /etc/udev/rules.d/
 echo "Installing netplan configuration..."
 cp script/etc/netplan/* /etc/netplan/
 echo "Installing systemd networkd configuration..."
-cp script/run/systemd/system/systemd-networkd-wait-online.service.d/* /run/systemd/system/systemd-networkd-wait-online.service.d
+mkdir -p /etc/systemd/system/systemd-networkd-wait-online.service.d
+cp script/etc/systemd/system/systemd-networkd-wait-online.service.d/* /etc/systemd/system/systemd-networkd-wait-online.service.d
 
 # reload udev rules
 chown root:root /etc/udev/rules.d/*

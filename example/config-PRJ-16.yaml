@@ -6,9 +6,6 @@ database:
   name: "test"
   collection: PRJ-16
 
-uploader:
-  upload_period: 10  # how often to push to DB, [s]
-
 system:
   work_dir: "/tmp/xerxes"  # where to store measurements
   log_dir: "/var/log/xerxes"  # where to store logs
@@ -85,22 +82,7 @@ system:
           root: "usb0"
           values:
             fft: fft
-    
-#     - label: "worker_reset"
-#       period: 30
-#       leaves:
-#         - address: 7
-#           label: "XAL-7"
-#           root: "usb0"
-#           calls:
-#             - "reset_soft"
-# 
-#         - address: 8
-#           label: "XAL-8"
-#           root: "usb0"
-#           calls:
-#             - "reset_soft"
-  
+            
   roots: 
     - label: "usb0"
       device: "/dev/ttyUSB0"
