@@ -3,8 +3,6 @@
 #: Description: Sets up permissions for the spi devices
 #:      Author: theMladyPan
 
-udev_rules_file='/etc/udev/rules.d/50-custom.rules'
-
 xerxes_user='ubuntu'
 git_branch='devel'
 
@@ -23,6 +21,10 @@ then
 	exit 1
 fi
 
+# read network id from the stdin:
+printf 'Enter the network id: '
+read network_id
+echo "Using network id: $network_id"    
 
 echo "updating system..."
 apt update
@@ -30,8 +32,8 @@ apt upgrade -y
 
 snap install zerotier
 
-echo "adding device to zerotier network"
-zerotier join a0cbf4b62a6c2b69
+echo "adding device to zerotier network $network_id"
+zerotier join $network_id
 
 # change hostname to match zerotier id
 hostnamectl set-hostname $(sudo zerotier info|cut -d" " -f3)
@@ -64,10 +66,9 @@ systemctl enable xerxes-node.service
 
 # TODO (@theMladyPan) skontrolovať či to inštaluje dobre
 echo "Installing Udev rules..."
-cp script/etc/udev/rules.d/40-huawei.rules /etc/udev/rules.d/
-cp script/etc/udev/rules.d/50-custom.rules /etc/udev/rules.d/
-cp script/etc/netplan/50-cloud-init.yaml /etc/netplan/
-chown root:root $udev_rules_file
+cp script/etc/udev/rules.d/* /etc/udev/rules.d/
+cp script/etc/netplan/* /etc/netplan/
+chown root:root /etc/udev/rules.d/*
 udevadm control --reload-rules
 udevadm trigger
 

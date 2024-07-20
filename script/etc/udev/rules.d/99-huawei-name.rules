@@ -1,0 +1,2 @@
+# rename the attached E3372 USB stick to something tangible
+SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="3566", ATTRS{idProduct}=="2001", NAME="huawei"

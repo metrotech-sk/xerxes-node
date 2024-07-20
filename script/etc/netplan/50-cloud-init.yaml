@@ -16,6 +16,6 @@ network:
         addresses:
           - 8.8.8.8
           - 8.8.4.4
-    enxf2a2e9eafa01:
+    huawei:
       dhcp4: yes
       dhcp6: no
