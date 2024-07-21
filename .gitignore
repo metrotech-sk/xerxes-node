@@ -5,7 +5,8 @@ prime
 
 # vscode pičoviny
 .history
-.vscode
+
+config.yaml
 
 #distutills pičoviny
 MANIFEST
@@ -122,6 +123,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+# keep example .env files
+!*/example/.env
 
 # Spyder project settings
 .spyderproject
@@ -140,4 +143,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-xerxes_node/config.py
+
+#keep examples
+!example/*

@@ -4,8 +4,7 @@
 start() {
     # code to start app comes here 
     # example: daemon program_name &
-    # TODO (@theMladyPan) toto prerobiť na relatívne cesty
-    /home/xerxes/xerxes-node/venv/bin/python /home/xerxes/xerxes-node/xerxes-worker
+    $HOME/xerxes-node/venv/bin/python $HOME/xerxes-node/xerxes-worker.py
 }
 
 stop() {
@@ -14,7 +13,7 @@ stop() {
     # TODO (@theMladyPan) toto lepšie spraviť
     echo "killing xerxes-worker"
     # ps ax|grep xerxes-worker|grep -v grep|cut -d"/" -f1|cut -d"p" -f1|xargs kill
-    killall xerxes-node.sh
+    pkill -f xerxes-node
 }
 
 case "$1" in 
